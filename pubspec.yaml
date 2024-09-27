@@ -31,12 +31,15 @@ dependencies:
   flutter:
     sdk: flutter
 
+  dartz: ^0.10.1
   equatable: ^2.0.5
   get_it: ^8.0.0
+  internet_connection_checker_plus: ^2.1.0
   cupertino_icons: ^1.0.2
 
   # Firebase
   firebase_core: ^2.24.2
+  cloud_firestore: ^4.17.5
 
 dev_dependencies:
   flutter_test:

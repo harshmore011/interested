@@ -16,8 +16,6 @@ class AppTheme {
   static final Color secondaryColor = _colorScheme.secondary;
   static final Color onPrimaryColor = _colorScheme.onPrimary;
   static final Color onSecondaryColor = _colorScheme.onSecondary;
-  static final Color backgroundColor = _colorScheme.background;
-  static final Color onBackgroundColor = _colorScheme.onBackground;
   static final Color surfaceColor = _colorScheme.surface;
   static final Color onSurfaceColor = _colorScheme.onSurface;
   static final Color errorColor = _colorScheme.error;
