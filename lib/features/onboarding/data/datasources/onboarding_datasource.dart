@@ -23,18 +23,21 @@ class OnboardingDataSourceImpl implements OnboardingDataSource {
 
       var db = FirebaseFirestore.instance;
 
-      var onboardingData = await db.collection("onboarding_data")
+      var ref = await db.collection("onboarding_data")
       .doc("getOnboardingData")
-      .get();
+      .withConverter(fromFirestore: OnboardingModel.fromFirestore,
+          toFirestore: (OnboardingModel onboardingModel, _) => onboardingModel.toFirestore());
 
-      if (onboardingData.exists) {
-        return OnboardingModel.fromFirestore(onboardingData, null);
+      final docSnap = await ref.get();
+      final city = docSnap.data(); // Convert to object
+      if (city != null) {
+        print(city);
       } else {
-        // throw Exception("No onboarding data found");
-        throw OnboardingDataNotFoundException();
+        print("No such document.");
       }
 
-      // return const OnboardingModel(businessTagline: '', businessName: '', benefits: []);
+      return city!;
+        // return OnboardingModel.fromFirestore(onboardingData, null);
 
     } catch (e) {
       throw ServerException();
@@ -52,7 +55,7 @@ class OnboardingDataSourceImpl implements OnboardingDataSource {
     .doc("getOnboardingData")
     .set(OnboardingModel(businessTagline: 'Delve into the world of your interests',
        businessName: 'interested!',
-       benefits: [
+      /* benefits: [
          Benefit(benefit: "Find",
            description: "Explore the vastness of what truly matters to your heart!"
          ),
@@ -63,8 +66,8 @@ class OnboardingDataSourceImpl implements OnboardingDataSource {
 
          Benefit(benefit: "Share",
              description: "Interested in sharing your knowledge/experience? Share it with interested!"
-             ),
-       ]).toFirestore())
+             ),*/
+        benefits: []).toFirestore())
     .then((value) => print("Onboarding data added"))
     .catchError((error) => print("Failed to add onboarding data: $error"));
 

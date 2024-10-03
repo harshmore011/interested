@@ -1,3 +1,4 @@
+
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
@@ -6,7 +7,8 @@ class OnboardingEntity extends Equatable {
   // final String? logo;
   final String businessTagline;
   final String businessName;
-  final List<Benefit> benefits;
+  // final List<Benefit> benefits;
+  final List<Map<String,dynamic>> benefits;
   // final String ctaMessage; // Call-to-Action Msg
   // final List<Feedback> feedbacks; // We can add later
 

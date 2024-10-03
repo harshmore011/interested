@@ -45,7 +45,7 @@ class _MyHomePageState extends State<MyHomePage> {
     // TODO: implement initState
     debugPrint("myHomePage: init()");
 
-    sl<OnboardingDataSource>().setOnboardingData();
+    sl<OnboardingDataSource>().getOnboardingData();
 
     super.initState();
   }
