@@ -1,0 +1,40 @@
+{
+  "flutter": {
+    "platforms": {
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "interested-project-011",
+          "configurations": {
+            "web": "1:637976649691:web:48143a9622049e332791fe"
+          }
+        }
+      }
+    }
+  },
+  "emulators": {
+    "auth": {
+      "port": 9099
+    },
+    "firestore": {
+      "port": 4000
+    },
+    "hosting": {
+      "port": 9101
+    },
+    "storage": {
+      "port": 5001
+    },
+    "ui": {
+      "enabled": true,
+      "port": 9200
+    },
+    "singleProjectMode": true
+  },
+  "firestore": {
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  }
+}
