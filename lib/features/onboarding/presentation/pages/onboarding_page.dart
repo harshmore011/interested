@@ -1,12 +1,16 @@
 
-import 'package:firebase_storage/firebase_storage.dart';
+
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:interested/core/theme/app_theme.dart';
-import 'package:interested/features/onboarding/domain/entities/onboarding_entity.dart';
+import 'package:interested/core/utils/constants.dart';
+import 'package:interested/core/utils/snackbar_message.dart';
 import 'package:interested/features/onboarding/presentation/blocs/onboarding_bloc.dart';
 import 'package:interested/features/onboarding/presentation/blocs/onboarding_event.dart';
 import 'package:interested/features/onboarding/presentation/blocs/onboarding_state.dart';
+
+import '../widgets/benefit_cards_list.dart';
 
 class OnboardingPage extends StatefulWidget {
   const OnboardingPage({super.key});
@@ -46,19 +50,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
               );
             } else if (state is GetOnboardingDataState) {
 
-              var onboardingModel = state.onboardingModel;
-             var size = MediaQuery.sizeOf(context);
-
-              var cards = _getBenefitCards(onboardingModel.benefitsWithImages);
-
+              final onboardingModel = state.onboardingModel;
+             final device = MediaQuery.sizeOf(context);
+             final deviceWidth = device.width;
+             final deviceHeight = device.height;
 
               return SingleChildScrollView(
                 // physics: BouncingScrollPhysics(),
                 // controller: ,
                 child: Container(
                   color: AppTheme.colorPrimary,
-                  // width: size.width,
-                  // width: size.width*0.6,
+                  // width: deviceWidth,
+                  width: deviceWidth < Constant.STANDARD_TABLET_WIDTH ? deviceWidth : deviceWidth*0.65,
                   // height: size.height,
                   padding: const EdgeInsets.all(24),
                   child: Column(
@@ -72,8 +75,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Container(
-                              width: size.width*0.6,
-                              height: 400,
+                              width: deviceWidth < Constant.STANDARD_TABLET_WIDTH ? deviceWidth*0.8 :deviceWidth*0.5,
+                              height: deviceWidth < Constant.STANDARD_TABLET_WIDTH ? 200 : 300,
                               // alignment: ,
                               padding: EdgeInsets.only(left: 50,top: 40),
                               decoration: BoxDecoration(
@@ -94,11 +97,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   alignment: Alignment.centerRight,
                                   opacity: 0.8,
                                   image: onboardingModel.bannerImages.first.image,
-                                  // NetworkImage(
-                                  // "https://firebasestorage.googleapis.com/v0/b/interested-project-011.appspot.com"
-                                  //     "/o/onboarding%2Ftagline.jpg?alt=media&token=d270c47c-b75f-43b8-b9c3-931b05b09385"
-                                    // , width: 300, height: 300,
-                                  // ),
+                                 /* NetworkImage(
+                                  "https://firebasestorage.googleapis.com/v0/b/interested-project-011.appspot.com"
+                                      "/o/onboarding%2Ftagline.jpg?alt=media&token=d270c47c-b75f-43b8-b9c3-931b05b09385"
+                                    , width: 300, height: 300,
+                                  ),*/
                                   fit: BoxFit.scaleDown,
                                 ),
                               ),
@@ -123,43 +126,26 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                 ],
                               ),
                             ),
-                            // gcloud storage buckets update gs://interested-project-011.appspot.com --cors-file=C:\Users\HARSH\Desktop\cors.jsoncors.json
-                            // curl --request PATCH \
-                            //  'https://storage.googleapis.com/storage/v1/b/gs://interested-project-011.appspot.com?fields=cors' \
-                            //  --header 'Authorization: Bearer $(gcloud auth print-access-token)' \
-                            //  --header 'Content-Type: application/json' \
-                            //  --data-binary @C:\Users\HARSH\Desktop\cors.json
-                            // TODO: Image Source here
-                            // Image.network("https://firebasestorage.googleapis.com/v0/b/interested-project-011.appspot.com/o/onboarding%2Ftagline.jpg?alt=media&token=d270c47c-b75f-43b8-b9c3-931b05b09385"
-                            //   , width: 300, height: 300,),
                           ],
                         ),
                       ),
                       Container(
                         // color: Colors.white,
                         padding: const EdgeInsets.only(top: 24,bottom: 24),
-                        child: Row(mainAxisSize: MainAxisSize.min,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children:
-                            cards,
-                         /* [
-                            ListView.builder(itemBuilder: (context, index) {
-                            return cards[index];
-                          }
-                          , itemCount: onboardingModel.benefitsWithImages.length,
-                          scrollDirection: Axis.horizontal,
-                            // shrinkWrap: true,
-                            // physics: const NeverScrollableScrollPhysics(),
-                          ),
-                          ]*/
-                          // [
-                            // _getBenefitCards(onboardingModel.benefits),
-                            // cards,
-                          // ],
-                        ),
+                        child: BenefitCardsList(benefits: onboardingModel.benefitsWithImages),
                       ),
-                      SizedBox(
-                        width: 100,),
+                      if(defaultTargetPlatform==TargetPlatform.android)...[
+                        MaterialButton(
+                          color: Colors.white,
+                          onPressed: (){
+                         SnackBarMessage.showSnackBar(
+                           message: "Coming Soon", context: context
+                         ) ;
+                        }
+                        , child: const Text("Get Started!"),)
+                      ] else...[ SizedBox(
+                        width: 100,
+                      ),]
                     ],
                   ),
                 ),
@@ -191,52 +177,5 @@ class _OnboardingPageState extends State<OnboardingPage> {
         )
     );
   }
-
-  _getBenefitCards(List<Benefit> benefits) {
-
-    List<Widget> benefitCards = [];
-
-    // var benefitsList = await _mapBenefitWithImages(benefits);
-
-    for(var benefit in benefits) {
-
-      benefitCards.add(
-        Card(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          color: Colors.white,
-          elevation: 4,
-          child: Container(
-            width: 275,
-            height: 400,
-            // constraints: BoxConstraints(maxHeight: ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              // crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(benefit.benefit, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
-                const SizedBox(height: 12,),
-                benefit.supportingImage,
-                const SizedBox(height: 12,),
-                Text(benefit.description, softWrap: true,textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),),
-                const SizedBox(height: 12,),
-              ],
-            ),
-          ),
-        )
-      );
-      benefitCards.add(const SizedBox(width: 40,));
-
-    }
-  return benefitCards;
-  // return Container();
-  }
-
 
 }
