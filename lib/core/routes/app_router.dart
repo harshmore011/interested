@@ -1,8 +1,10 @@
 
 import 'package:flutter/material.dart';
-import 'package:interested/features/onboarding/data/datasources/onboarding_datasource.dart';
-import 'package:interested/features/onboarding/data/repositories/onboarding_repository_impl.dart';
-import 'package:interested/features/onboarding/presentation/pages/onboarding_page.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:interested/features/authentication/presentation/blocs/authentication_bloc.dart';
+import 'package:interested/features/authentication/presentation/blocs/authentication_event.dart';
+import '../../features/authentication/presentation/blocs/authentication_state.dart';
+import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 
 import '../../features/onboarding/domain/repositories/onboarding_repository.dart';
 import '../di/dependency_injector.dart';
@@ -13,12 +15,48 @@ class AppRouter {
   //Define static routeNames here and then use in switch/navigator
 
   Route<dynamic> generateRoute(RouteSettings settings) {
-
-
     switch (settings.name) {
+     /* case '/error':
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            body: Center(
+              child: Text('ERROR: ${settings.arguments}',
+                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+            ),
+          ),
+        );*/
       case '/':
-        // return MaterialPageRoute(builder: (_) => const MyHomePage(title: "TestTitle"));
         return MaterialPageRoute(builder: (_) => const OnboardingPage());
+      case "/homePage":
+        return MaterialPageRoute(
+          builder: (_) => Scaffold(
+            appBar: AppBar(title: const Text("Home Page"),
+            actions: [
+              TextButton(onPressed: (){
+                _.read<AuthenticationBloc>().add(SignOutEvent());
+              }, child: Text("Sign out", style: TextStyle(color: Colors.white),),),
+            ],),
+            body: BlocConsumer(builder: (_,state){
+
+              if(state is LoadingState) {
+                return Center(
+                  child: CircularProgressIndicator(),
+                );
+              }
+
+              return Center(
+                child: Text('Welcome!', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),),
+              );
+            }, listener: (_,state){
+              if(state is SignedOutState) {
+                Navigator.of(_).pushNamedAndRemoveUntil("/",
+                    (Route<dynamic> route) => false);
+              }
+            },),
+          ),
+        );
+      case "/appColors":
+        return MaterialPageRoute(builder: (_) => const MyHomePage(title: "AppColors"));
       default:
 
         return MaterialPageRoute(

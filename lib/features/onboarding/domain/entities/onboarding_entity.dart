@@ -1,13 +1,15 @@
 
+import 'dart:typed_data';
+
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 
 class OnboardingEntity extends Equatable {
 
   // final String? logo;
   final String businessTagline;
   final String businessName;
-  final List<Image> bannerImages;
+  final List<Uint8List> bannerImages;
+  // final List<Image> bannerImages;
   final List<Benefit> benefitsWithImages;
   final List<Map<String,dynamic>> benefits;
   // final String ctaMessage; // Call-to-Action Msg
@@ -31,7 +33,8 @@ class Benefit extends Equatable {
 
   final String benefit;
   final String description;
-  /*late*/ final Image supportingImage;
+  // /*late*/ final Image supportingImage;
+  /*late*/ final Uint8List supportingImage;
 
 
    const Benefit({required this.benefit, required this.description, required this.supportingImage});

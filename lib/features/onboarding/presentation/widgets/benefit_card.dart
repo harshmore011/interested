@@ -34,7 +34,7 @@ class _BenefitCardState extends State<BenefitCard> {
           children: [
             Text(benefit.benefit, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),),
             const SizedBox(height: 12,),
-            benefit.supportingImage,
+            // benefit.supportingImage,
             const SizedBox(height: 12,),
             Text(benefit.description, softWrap: true,textAlign: TextAlign.center,
               style: TextStyle(

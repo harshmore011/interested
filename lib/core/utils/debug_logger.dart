@@ -1,14 +1,16 @@
 
 
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:logger/logger.dart';
+import '../di/dependency_injector.dart';
+
+// Logger debugLogger = Logger(level: Level.debug);
+DebugLog logger = DebugLog();
+
 
 class DebugLog {
 
- final String context;
-  final String message;
-
-  DebugLog(this.context, this.message){
-    debugPrint("$context: $message");
+  void log(String context, String message) {
+   sl<Logger>().d("$context: $message",time: DateTime.now());
   }
 
 }

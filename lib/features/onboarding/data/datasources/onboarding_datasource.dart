@@ -1,11 +1,14 @@
 
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:interested/core/failures/exceptions.dart';
-import 'package:interested/features/onboarding/data/models/onboarding_model.dart';
-import 'package:interested/features/onboarding/domain/entities/onboarding_entity.dart';
+
+import '../../../../core/failures/exceptions.dart';
+import '../../../../core/utils/debug_logger.dart';
+import '../../domain/entities/onboarding_entity.dart';
+import '../models/onboarding_model.dart';
 
 abstract class OnboardingDataSource {
 
@@ -38,19 +41,19 @@ class OnboardingDataSourceImpl implements OnboardingDataSource {
       final docSnap = await ref.get();
       final onboardingModel = docSnap.data(); // Convert to object
       if (onboardingModel != null) {
-        debugPrint("Onboarding model data: $onboardingModel");
+        logger.log("OnboardingDataSource","Onboarding model data: $onboardingModel");
         await _mapOnboardingImages(onboardingModel);
 
       } else {
-        debugPrint("No onboarding document found on server.");
-        throw OnboardingDataNotFoundException();
+        logger.log("OnboardingDataSource","No onboarding document found on server.");
+        throw DataNotFoundException();
       }
 
       return onboardingModel;
         // return OnboardingModel.fromFirestore(onboardingData, null);
 
     } on FirebaseException catch (e) {
-      debugPrint(e.toString());
+      logger.log("OnboardingDataSource",e.toString());
       // throw ServerException();
       // throw Exception("Failed to get onboarding data: $e");
       throw ServerException();
@@ -65,16 +68,16 @@ class OnboardingDataSourceImpl implements OnboardingDataSource {
     try {
       final userCredential =
           await FirebaseAuth.instance.signInAnonymously();
-      print("Signed in with temporary account.");
+      logger.log("OnboardingDataSource","Signed in with temporary account.");
 
       return userCredential;
     } on FirebaseAuthException catch (e) {
       switch (e.code) {
         case "operation-not-allowed":
-          print("Anonymous auth hasn't been enabled for this project.");
+          logger.log("OnboardingDataSource","Anonymous auth hasn't been enabled for this project.");
           break;
         default:
-          print("Unknown error. $e");
+          logger.log("OnboardingDataSource","Unknown error. $e");
       }
       throw Exception("Failed to Authenticate: $e");
 
@@ -86,9 +89,10 @@ class OnboardingDataSourceImpl implements OnboardingDataSource {
     final ref = FirebaseStorage.instance.ref().child("onboarding");
     final result = await ref.listAll();
 
-    var bytes = await ref.child("tagline.jpg").getData();
-    var bannerImage = Image.memory(bytes!, width: 400, height: 350,);
-    onboardingModel.bannerImages.add(bannerImage);
+    Uint8List? bytes = await ref.child("tagline.jpg").getData();
+    // Sending bytes data to UI instead FlutterImage to not violate ClearArchitecture dependency rule
+    // var bannerImage = Image.memory(bytes!, width: 400, height: 350,);
+    onboardingModel.bannerImages.add(bytes!);
 
     var benefitsWithImages = await _mapBenefitWithImages(result.items, onboardingModel.benefits);
     // onboardingModel.benefitsWithImages = benefitsWithImages;
@@ -100,15 +104,15 @@ class OnboardingDataSourceImpl implements OnboardingDataSource {
     List<Benefit> benefitsList = [];
 
     for (var item in items) {
-      debugPrint("OnboardingPage:itemsString: ${ item.toString()}");
+      logger.log("OnboardingDataSource","OnboardingPage:itemsString: ${ item.toString()}");
       var bytes = await item.getData();
 
-      var supportingImage = Image.memory(bytes!, width: 200, height: 200,);
+      // var supportingImage = Image.memory(bytes!, width: 200, height: 200,);
       for(var benefit in benefits) {
         if("${benefit["benefit"].toString().toLowerCase()}.jpg" == item.name) {
         // if(item.name.contains("other")) {
-          debugPrint("OnboardingPage:itemsName: ${ item.name} == ${benefit["benefit"]}.jpg");
-          benefitsList.add(Benefit(benefit: benefit["benefit"], description: benefit["description"], supportingImage: supportingImage));
+          logger.log("OnboardingDataSource","OnboardingPage:itemsName: ${ item.name} == ${benefit["benefit"]}.jpg");
+          benefitsList.add(Benefit(benefit: benefit["benefit"], description: benefit["description"], supportingImage: bytes!));
           break;
         }
       }

@@ -13,6 +13,10 @@ class Constant {
   static const String WRONG_PASSWORD_FAILURE_MESSAGE ="Incorrect password, please try again.";
   static const String UNMATCHED_PASSWORD_FAILURE_MESSAGE ="Password doesn't match.";
   static const String TOO_MANY_REQUESTS_FAILURE_MESSAGE ="Too many requests, please try again later.";
+  static const String INVALID_EMAIL_FAILURE_MESSAGE ="The email address is invalid.";
+  static const String WEAK_PASSWORD_FAILURE_MESSAGE ="Please use a stronger password.";
+  static const String INVALID_CREDENTIALS_FAILURE_MESSAGE ="Invalid credentials, please try again.";
+  static const String EMAIL_ALREADY_IN_USE_FAILURE_MESSAGE ="The email address is already in use.";
 
   // Standard device sizes (WIDTH x HEIGHT)
   static const double STANDARD_MOBILE_WIDTH = 375;

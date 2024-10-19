@@ -12,4 +12,18 @@ class OfflineFailure extends Failure {}
 
 class ServerFailure extends Failure {}
 
-class OnboardingDataNotFoundFailure extends Failure {}
+class DataNotFoundFailure extends Failure {}
+
+class NoUserFailure extends Failure {}
+
+class EmailAlreadyInUseFailure extends Failure {}
+
+class InvalidEmailFailure extends Failure {}
+
+class WeakPasswordFailure extends Failure {}
+
+class TooManyRequestsFailure extends Failure {}
+
+class WrongPasswordFailure extends Failure {}
+
+class InvalidCredentialsFailure extends Failure {}

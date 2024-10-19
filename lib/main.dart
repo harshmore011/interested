@@ -4,10 +4,11 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:interested/core/di/dependency_injector.dart';
-import 'package:interested/core/utils/debug_logger.dart';
-import 'package:interested/features/onboarding/presentation/blocs/onboarding_bloc.dart';
+import 'package:interested/features/authentication/presentation/blocs/authentication_bloc.dart';
+import 'core/di/dependency_injector.dart';
 import 'core/routes/app_router.dart';
+import 'core/utils/debug_logger.dart';
+import 'features/onboarding/presentation/blocs/onboarding_bloc.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
 
@@ -16,6 +17,8 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   debugPrint("main: ");
+
+  logger.log("main:", "");
 
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -33,6 +36,7 @@ Future<void> main() async {
       MultiBlocProvider(
         providers: [
           BlocProvider(create: (context) => sl<OnboardingBloc>()),
+          BlocProvider(create: (context) => sl<AuthenticationBloc>()),
         ],
         child: const MyApp(),
       ));
