@@ -1,9 +1,28 @@
+import 'dart:convert';
+
 import 'package:get_it/get_it.dart';
+import 'package:interested/features/authentication/domain/entities/user_entity.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:logger/logger.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../features/article/article_management/domain/usecases/get_draft_articles_usecase.dart';
+import '../../features/article/article_management/domain/usecases/get_published_articles_usecase.dart';
+import '../../features/article/article_management/domain/usecases/get_scheduled_articles_usecase.dart';
+import '../../features/article/article_management/domain/usecases/publish_article_usecase.dart';
+import '../../features/article/article_management/domain/usecases/schedule_publish_article_usecase.dart';
+import '../../features/article/article_management/domain/usecases/unpublish_article_usecase.dart';
+import '../../features/article/article_management/domain/usecases/update_article_usecase.dart';
+import '../../features/article/article_management/domain/usecases/create_draft_article_usecase.dart';
+import '../../features/article/article_management/domain/usecases/delete_article_usecase.dart';
+import '../../features/article/article_management/data/datasources/article_management_datasource.dart';
+import '../../features/article/article_management/data/repositories/article_management_repository_impl.dart';
+import '../../features/article/article_management/domain/repositories/article_management_repository.dart';
+import '../../features/article/article_management/presentation/blocs/article_management_bloc.dart';
 import '../../features/authentication/data/datasources/authentication_datasource.dart';
+import '../../features/authentication/data/models/publisher_model.dart';
 import '../../features/authentication/data/repositories/authentication_repository_impl.dart';
+import '../../features/authentication/domain/entities/publisher_entity.dart';
 import '../../features/authentication/domain/repositories/authentication_repository.dart';
 import '../../features/authentication/domain/usecases/anonymous_sign_in_usecase.dart';
 import '../../features/authentication/domain/usecases/anonymous_to_user_usecase.dart';
@@ -23,15 +42,17 @@ import '../../features/onboarding/presentation/blocs/onboarding_bloc.dart';
 import '../network/network_info.dart';
 import '../routes/app_router.dart';
 import '../theme/app_theme.dart';
+import '../utils/shared_pref_helper.dart';
 
 final sl = GetIt.instance;
 
-void injectDependencies() {
-
-  /// Core
+Future<void> injectDependencies() async {
 
   // Logger
   sl.registerLazySingleton<Logger>(() => Logger(level: Level.debug));
+
+  /// Core
+  await SharedPrefHelper.initUserIfExists();
 
   // Theme
   sl.registerLazySingleton<AppTheme>(() => AppTheme());
@@ -65,19 +86,48 @@ void injectDependencies() {
       // , forgotPasswordUseCase: sl()
       , signOutUseCase: sl()));
   //UseCases
-  sl.registerSingleton(() => AnonymousSignInUseCase(sl()));
-  sl.registerSingleton(() => AnonymousToUserUseCase(sl()));
-  sl.registerSingleton(() => UserSignUpUseCase(sl()));
-  sl.registerSingleton(() => UserSignInUseCase(sl()));
-  sl.registerSingleton(() => PublisherSignUpUseCase(sl()));
-  sl.registerSingleton(() => PublisherSignInUseCase(sl()));
-  sl.registerSingleton(() => VerifyEmailUseCase(sl()));
-  sl.registerSingleton(() => ForgotPasswordUseCase(sl()));
-  sl.registerSingleton(() => SignOutUseCase(sl()));
+  sl.registerLazySingleton(() => AnonymousSignInUseCase(sl()));
+  sl.registerLazySingleton(() => AnonymousToUserUseCase(sl()));
+  sl.registerLazySingleton(() => UserSignUpUseCase(sl()));
+  sl.registerLazySingleton(() => UserSignInUseCase(sl()));
+  sl.registerLazySingleton(() => PublisherSignUpUseCase(sl()));
+  sl.registerLazySingleton(() => PublisherSignInUseCase(sl()));
+  sl.registerLazySingleton(() => VerifyEmailUseCase(sl()));
+  // sl.registerLazySingleton(() => ForgotPasswordUseCase(sl()));
+  sl.registerLazySingleton(() => SignOutUseCase(sl()));
   //Repositories
   sl.registerLazySingleton<AuthenticationRepository>(() => AuthenticationRepositoryImpl(networkInfo: sl()
       , authenticationDataSource: sl()));
   //Data Source
   sl.registerLazySingleton<AuthenticationDataSource>(() => AuthenticationDataSourceImpl());
+
+  /// PUBLISHER ARTICLE MANAGEMENT
+  // Bloc
+  sl.registerFactory(() => ArticleManagementBloc(getDraftArticlesUseCase: sl(),
+      getPublishedArticlesUseCase: sl(),
+      getScheduledArticlesUseCase: sl(),
+      publishArticleUseCase: sl(),
+      deleteArticleUseCase: sl(),
+      schedulePublishArticleUseCase: sl(),
+      unpublishArticleUseCase: sl(),
+      updateArticleUseCase: sl(),
+      createDraftArticleUseCase: sl()));
+  // UseCases
+  sl.registerLazySingleton(() => GetDraftArticlesUseCase(sl()));
+  sl.registerLazySingleton(() => GetPublishedArticlesUseCase(sl()));
+  sl.registerLazySingleton(() => GetScheduledArticlesUseCase(sl()));
+  sl.registerLazySingleton(() => PublishArticleUseCase(sl()));
+  sl.registerLazySingleton(() => DeleteArticleUseCase(sl()));
+  sl.registerLazySingleton(() => SchedulePublishArticleUseCase(sl()));
+  sl.registerLazySingleton(() => UnpublishArticleUseCase(sl()));
+  sl.registerLazySingleton(() => UpdateArticleUseCase(sl()));
+  sl.registerLazySingleton(() => CreateDraftArticleUseCase(sl()));
+  // Repositories
+  sl.registerLazySingleton<ArticleManagementRepository>(() => ArticleManagementRepositoryImpl(networkInfo: sl()
+      , articleManagementDataSource: sl()));
+  //Data Source
+  sl.registerLazySingleton<ArticleManagementDataSource>(() => ArticleManagementDataSourceImpl());
+
+
 
 }

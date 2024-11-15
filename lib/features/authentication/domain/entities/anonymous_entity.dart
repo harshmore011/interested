@@ -1,12 +1,24 @@
-
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 
 class Anonymous extends Equatable {
 
-  const Anonymous();
+  final String uid;
+  final DateTime creationTime;
+  final DateTime lastSignInTime;
+  final String refreshToken;
+
+  const Anonymous({
+    required this.uid,
+    required this.creationTime,
+    required this.lastSignInTime,
+    required this.refreshToken,
+  });
 
   @override
-  List<Object?> get props => [];
-
+  List<Object?> get props => [
+        uid,
+        creationTime,
+        lastSignInTime,
+        refreshToken,
+      ];
 }

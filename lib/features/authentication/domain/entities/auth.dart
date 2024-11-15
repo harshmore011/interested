@@ -5,6 +5,13 @@ enum AuthenticationProvider {
   google
 }
 
+enum PersonRole {
+  admin,
+  anonymous,
+  user,
+  publisher
+}
+
 class AuthParams extends Equatable {
 
   final EmailAuthCredential? credential;

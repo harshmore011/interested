@@ -10,7 +10,7 @@ DebugLog logger = DebugLog();
 class DebugLog {
 
   void log(String context, String message) {
-   sl<Logger>().d("$context: $message",time: DateTime.now());
+   sl<Logger>().d("${DateTime.now()}: $context: $message",);
   }
 
 }

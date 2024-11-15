@@ -1,9 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:interested/core/utils/debug_logger.dart';
 
+import '../../../../core/di/dependency_injector.dart';
 import '../../../../core/failures/exceptions.dart';
-import '../../../../core/failures/failures.dart';
+import '../../../../core/utils/shared_pref_helper.dart';
 import '../../domain/entities/auth.dart';
 import '../models/anonymous_model.dart';
 import '../models/publisher_model.dart';
@@ -17,6 +19,10 @@ abstract class AuthenticationDataSource {
   Future<UserModel> userSignUp(AuthParams params);
 
   Future<UserModel> userSignIn(AuthParams params);
+
+  Future<void> switchToUser();
+
+  Future<void> switchToPublisher();
 
   Future<PublisherModel> publisherSignUp(AuthParams params);
 
@@ -68,6 +74,69 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
   }
 */
 
+  _storePersonToFirestore({AnonymousModel? anonymous, UserModel? user, PublisherModel? publisher}) async {
+
+    final db = FirebaseFirestore.instance;
+
+    if (anonymous != null) {
+     await db.collection("anonymous").doc(anonymous.uid).set(anonymous.toJson());
+    }
+    if (user != null) {
+      // check and add new user if does not already exists
+      final userDocRef = db.collection("users").doc(user.email);
+     final userDoc = await userDocRef.get();
+     if (!userDoc.exists) {
+       await userDocRef.set(user.toJson());
+     }
+     _checkAndAddNewPersonRole(db, user.email, PersonRole.user);
+
+    }
+    if (publisher != null) {
+      // check and add new publisher if does not already exists
+      final publisherDocRef = db.collection("publishers").doc(publisher.email);
+      final publisherDoc = await publisherDocRef.get();
+      if (!publisherDoc.exists) {
+        await publisherDocRef.set(publisher.toJson());
+      }
+      _checkAndAddNewPersonRole(db, publisher.email, PersonRole.publisher);
+
+    }
+
+  }
+
+  Future<void> _checkAndAddNewPersonRole(FirebaseFirestore? dbInstance, String email, PersonRole personCurrRole) async {
+    logger.log(
+        "AuthenticationDataSource:_checkAndAddNewPersonRole()", "started");
+    FirebaseFirestore db = dbInstance ?? FirebaseFirestore.instance;
+
+    // if same user already exists as publisher, check and add new publisher role in publisherModel
+    if (personCurrRole == PersonRole.user) {
+      final publisherDocRef = db.collection("publishers").doc(email);
+      final pubDoc = await publisherDocRef.get();
+      if (pubDoc.exists) {
+        PublisherModel publisher = PublisherModel.fromJson(pubDoc.data()!);
+        if (!publisher.personRoles.contains(PersonRole.user)) {
+          publisher.personRoles.add(PersonRole.user);
+          await publisherDocRef.update(publisher.toJson());
+        }
+      }
+    }
+
+    // if same publisher already exists as user, check and add new user role in userModel
+    if (personCurrRole == PersonRole.publisher) {
+    final userDocRef = db.collection("users").doc(email);
+    final userDoc = await userDocRef.get();
+    if (userDoc.exists) {
+      UserModel user = UserModel.fromJson(userDoc.data()!);
+      if (!user.personRoles.contains(PersonRole.publisher)) {
+        user.personRoles.add(PersonRole.publisher);
+        await userDocRef.update(user.toJson());
+      }
+    }
+  }
+
+  }
+
   @override
   Future<AnonymousModel> anonymousSignIn() async {
     logger.log("AuthenticationDataSource:anonymousSignIn()",
@@ -80,15 +149,36 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
       logger.log("AuthenticationDataSource:anonymousSignIn()",
           "UserCredentialForAnonymous: $userCredential");
 
-      AnonymousModel anonymous = AnonymousModel();
+      // UserCredentialForAnonymous:
+      /* UserCredential(additionalUserInfo: AdditionalUserInfo(isNewUser: true, profile: {},
+          providerId: null, username: null, authorizationCode: null), credential: null,
+          user: User(displayName: null, email: null, isEmailVerified: false,
+              isAnonymous: true, metadata: UserMetadata(creationTime: 2024-10-20 07:37:03.000Z,
+                  lastSignInTime: 2024-10-20 07:37:03.000Z), phoneNumber: null,
+              photoURL: null, providerData, [], refreshToken:
+              eyJfQXV0aEVtdWxhdG9yUmVmcmVzaFRva2VuIjoiRE8gTk9UIE1PRElGWSIsImxvY2FsSW
+              QiOiJWMnVOSTFKWERtVHRYdUtROTJ6WVlib3hDOGt0IiwicHJvdmlkZXIiOiJhbm9ueW1vdXMiLC
+              JleHRyYUNsYWltcyI6e30sInByb2plY3RJZCI6ImludGVyZXN0ZWQtcHJvamVjdC0wMTEifQ==,
+              tenantId: null, uid: V2uNI1JXDmTtXuKQ92zYYboxC8kt))*/
+
+      User anonymousUser = userCredential.user!;
+
+      AnonymousModel anonymous = AnonymousModel(
+        creationTime: anonymousUser.metadata.creationTime!,
+        lastSignInTime: anonymousUser.metadata.lastSignInTime!,
+        refreshToken: anonymousUser.refreshToken!,
+        uid: anonymousUser.uid,
+      );
+
+
+      await SharedPrefHelper.storePersonLocallyByKey("anonymousModel",anonymous.toString());
+      await _storePersonToFirestore(anonymous: anonymous);
 
       return anonymous;
     } on FirebaseAuthException catch (e) {
       switch (e.code) {
         case "operation-not-allowed":
           logger.log("AuthenticationDataSource", e.toString());
-          logger.log("AuthenticationDataSource",
-              "Anonymous auth hasn't been enabled for this project.");
         default:
           logger.log("AuthenticationDataSource", "Unknown error. $e");
       }
@@ -99,8 +189,7 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
 
   @override
   Future<UserModel> anonymousToUser(AuthParams params) async {
-    logger.log("AuthenticationDataSource:anonymousToUser()",
-        "Params: $params");
+    logger.log("AuthenticationDataSource:anonymousToUser()", "Params: $params");
     try {
       var user = FirebaseAuth.instance.currentUser;
       // Using credential to LINK anonymous user a/c to user a/c
@@ -125,11 +214,28 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
         logger.log("AuthenticationDataSource",
             "Anonymous user linked to user: $userCredential");
 
-        return UserModel(
-            name: userCredential.user!.displayName ?? "UnnamedUser",
-            email: userCredential.user!.email ?? "NoEmail!",
-            isEmailVerified: userCredential.user!.emailVerified);
-        // return UserModel.fromFirebaseUser(userCredential.user!);
+        user = userCredential.user!;
+        final String name = user.displayName ?? user.email!.split("@")[0];
+
+        UserModel userModel = UserModel(
+            name: name,
+            email: user.email!,
+            isEmailVerified: user.emailVerified,
+            creationTime: user.metadata.creationTime!,
+            lastSignInTime: user.metadata.lastSignInTime!,
+            authProvider: params.authProvider,
+            refreshToken: user.refreshToken!,
+            uid: user.uid
+        );
+
+        userModel.setPersonRoles([PersonRole.user]);
+
+        // sl.registerLazySingleton<User>(() => userModel);
+
+        await SharedPrefHelper.storePersonLocallyByKey("userModel",userModel.toString());
+        await _storePersonToFirestore(user: userModel);
+
+        return userModel;
       } else {
         throw NoUserException();
       }
@@ -170,8 +276,38 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
       final UserCredential userCredential;
       if (params.authProvider == AuthenticationProvider.emailPassword) {
         userCredential = await _signInWithEmailPassword(params);
+        /*New user signed up: UserCredential(additionalUserInfo: AdditionalUserInfo(
+        isNewUser: true, profile: {}, providerId: password, username: null, authorizationCode:
+         null), credential: null, user: User(displayName: null, email: harshmore011@gmail.com,
+          isEmailVerified: false, isAnonymous: false, metadata: UserMetadata(creationTime:
+           2024-10-20 08:28:29.000Z, lastSignInTime: 2024-10-20 08:28:29.000Z), phoneNumber:
+            null, photoURL: null, providerData, [UserInfo(displayName: null, email:
+             harshmore011@gmail.com, phoneNumber: null, photoURL: null, providerId:
+             password, uid: harshmore011@gmail.com)], refreshToken: eyJfQXV0aEVtdWxhdG9yUmVmcm
+             VzaFRva2VuIjoiRE8gTk9UIE1PRElGWSIsImxvY2FsSWQiOiJlN1VXR3Q4N29zcVR0dEViY0xsdHliY
+             2RoVWlSIiwicHJvdmlkZXIiOiJwYXNzd29yZCIsImV4dHJhQ2xhaW1zIjp7fSwicHJvamVjdElkIjoiaW50
+             ZXJlc3RlZC1wcm9qZWN0LTAxMSJ9, tenantId: null, uid: e7UWGt87osqTttEbcLltybcdhUiR))*/
       } else if (params.authProvider == AuthenticationProvider.google) {
         userCredential = await _signInWithGoogle();
+
+        // New user signed up:
+        // UserCredential(additionalUserInfo: AdditionalUserInfo(isNewUser: true, profile:
+        // {granted_scopes: openid https://www.googleapis.com/auth/userinfo.profile
+        // https://www.googleapis.com/auth/userinfo.email, id:
+        // 7307007536320925425031238435275611536907, name: Panda Chicken, verified_email: true,
+        // locale: en, email: panda.chicken.80@example.com}, providerId: google.com, username:
+        // null, authorizationCode: null), credential: AuthCredential(providerId: google.com,
+        // signInMethod: google.com, token: null, accessToken:
+        // FirebaseAuthEmulatorFakeAccessToken_google.com), user: User(displayName: Panda Chicken,
+        // email: panda.chicken.80@example.com, isEmailVerified: true, isAnonymous: false,
+        // metadata: UserMetadata(creationTime: 2024-10-20 08:11:54.000Z, lastSignInTime:
+        // 2024-10-20 08:11:54.000Z), phoneNumber: null, photoURL: null, providerData,
+        // [UserInfo(displayName: Panda Chicken, email: panda.chicken.80@example.com,
+        // phoneNumber: null, photoURL: null, providerId: google.com, uid:
+        // 7307007536320925425031238435275611536907)], refreshToken:
+        // eyJfQXV0aEVtdWxhdG9yUmVmcmVzaFRva2VuIjoiRE8gTk9UIE1PRElGWSIsImxvY2FsSWQiOiJ6Rm1lcmdoYkY5eU
+        // E4UTZ2cnNINzRlNEJtcUw4IiwicHJvdmlkZXIiOiJnb29nbGUuY29tIiwiZXh0cmFDbGFpbXMiOnt9LC
+        // Jwcm9qZWN0SWQiOiJpbnRlcmVzdGVkLXByb2plY3QtMDExIn0=, tenantId: null, uid: zFmerghbF9yA8Q6vrsH74e4BmqL8))
       } else {
         logger.log("AuthenticationDataSource",
             "Unknown auth provider. $params.authProvider");
@@ -181,10 +317,28 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
       logger.log(
           "AuthenticationDataSource", "New user signed up: $userCredential");
 
-      return UserModel(
-          name: userCredential.user!.displayName ?? "UnnamedUser",
-          email: userCredential.user!.email ?? "NoEmail!",
-          isEmailVerified: userCredential.user!.emailVerified);
+      User user = userCredential.user!;
+      final String name = user.displayName ?? user.email!.split("@")[0];
+
+      UserModel userModel = UserModel(
+          name: name,
+          email: user.email!,
+          isEmailVerified: user.emailVerified,
+          creationTime: user.metadata.creationTime!,
+          lastSignInTime: user.metadata.lastSignInTime!,
+          authProvider: params.authProvider,
+          refreshToken: user.refreshToken!,
+          uid: user.uid
+      );
+      userModel.personRoles.add(PersonRole.user);
+
+
+      // sl.registerLazySingleton<User>(() => userModel);
+
+      await SharedPrefHelper.storePersonLocallyByKey("userModel",userModel.toString());
+      await _storePersonToFirestore(user: userModel);
+
+      return userModel;
       // return UserModel.fromFirebaseUser(userCredential.user!);
     } on FirebaseAuthException catch (e) {
       logger.log("AuthenticationDataSource:userSignIn()", "$e");
@@ -252,11 +406,29 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
       logger.log(
           "AuthenticationDataSource", "New user signed up: $userCredential");
 
-      return UserModel(
-          name: userCredential.user!.displayName ?? "UnnamedUser",
-          email: userCredential.user!.email ?? "NoEmail!",
-          isEmailVerified: userCredential.user!.emailVerified);
-      // return UserModel.fromFirebaseUser(userCredential.user!);
+      User user = userCredential.user!;
+      final String name = user.displayName ?? user.email!.split("@")[0];
+
+      UserModel userModel = UserModel(
+          name: name,
+          email: user.email!,
+          isEmailVerified: user.emailVerified,
+          creationTime: user.metadata.creationTime!,
+          lastSignInTime: user.metadata.lastSignInTime!,
+          authProvider: params.authProvider,
+          refreshToken: user.refreshToken!,
+          uid: user.uid
+      );
+
+      userModel.setPersonRoles([PersonRole.user]);
+
+
+      // sl.registerLazySingleton<User>(() => userModel);
+
+      await SharedPrefHelper.storePersonLocallyByKey("userModel",userModel.toString());
+      await _storePersonToFirestore(user: userModel);
+
+      return userModel;
     } on FirebaseAuthException catch (e) {
       logger.log("AuthenticationDataSource:userSignUp()", "$e");
 
@@ -302,12 +474,10 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
   }
 
   Future<UserCredential> _signInWithGoogle() async {
-    logger.log("AuthenticationDataSource:_signInWithGoogle()","");
+    logger.log("AuthenticationDataSource:_signInWithGoogle()", "");
     // Create a new provider
     GoogleAuthProvider googleProvider = GoogleAuthProvider();
 
-    googleProvider
-        .addScope('https://www.googleapis.com/auth/contacts.readonly');
     googleProvider.addScope('https://www.googleapis.com/auth/userinfo.email');
     // googleProvider.addScope('https://www.googleapis.com/auth/userinfo.profile');
     // googleProvider.addScope('https://www.googleapis.com/auth/cloud-platform');
@@ -321,16 +491,60 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
   }
 
   Future<UserCredential> _signUpWithEmailPassword(AuthParams params) async {
-    logger.log("AuthenticationDataSource:_signUpWithEmailPassword()","");
+    logger.log("AuthenticationDataSource:_signUpWithEmailPassword()", "");
     return await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: params.credential!.email, password: params.credential!.password);
   }
 
   Future<UserCredential> _signInWithEmailPassword(AuthParams params) async {
-    logger.log("AuthenticationDataSource:_signInWithEmailPassword()","");
+    logger.log("AuthenticationDataSource:_signInWithEmailPassword()", "");
     return await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: params.credential!.email, password: params.credential!.password);
   }
+
+  // NO NEED TO BE IMPLEMENTED! Can be used to make existing user a publisher
+  @override
+  Future<void> switchToPublisher() async {
+    logger.log("AuthenticationDataSource:switchToPublisher()", "");
+
+    UserModel userModel = sl<UserModel>();
+    try {
+     final doc = await FirebaseFirestore.instance
+          .collection("publishers")
+          .doc(userModel.email)
+          .get();
+
+      if (doc.exists) {
+        logger.log("AuthenticationDataSource:switchToPublisher()", "Publisher already exists");
+
+        PublisherModel publisherModel = PublisherModel.fromJson(doc.data()!);
+
+        return;
+      } else {
+        // New Publisher, so he needs to sign up as one first
+        logger.log("AuthenticationDataSource:switchToPublisher()", "Switching to publisher");
+        if(userModel.authProvider == AuthenticationProvider.emailPassword) {
+          // TODO: Show Authentication screen and then sign out as user
+          throw NoUserException();
+        } else if (userModel.authProvider == AuthenticationProvider.google) {
+          publisherSignUp(AuthParams(authProvider: AuthenticationProvider.google));
+        }
+      }
+
+    } catch (e) {
+      logger.log("AuthenticationDataSource:switchToPublisher()", "$e");
+      throw ServerException();
+    }
+
+  }
+
+  @override
+  Future<void> switchToUser() {
+    // TODO: implement switchToUser
+    throw UnimplementedError();
+  }
+
+
 
   @override
   Future<PublisherModel> publisherSignIn(AuthParams params) async {
@@ -350,12 +564,29 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
       logger.log("AuthenticationDataSource",
           "New publisher signed up: $userCredential");
 
-      return PublisherModel(
-          name: userCredential.user!.displayName ?? "UnnamedUser",
-          email: userCredential.user!.email ?? "NoEmail!",
-          isEmailVerified: userCredential.user!.emailVerified,
+      User user = userCredential.user!;
+      final String name = user.displayName ?? user.email!.split("@")[0];
+
+      PublisherModel publisherModel = PublisherModel(
+          name: name,
+          email: user.email!,
           about: "",
-          followersCount: 0);
+          followersCount: 0,
+          isEmailVerified: user.emailVerified,
+          creationTime: user.metadata.creationTime!,
+          lastSignInTime: user.metadata.lastSignInTime!,
+          authProvider: params.authProvider,
+          refreshToken: user.refreshToken!,
+          uid: user.uid
+      );
+      publisherModel.personRoles.add(PersonRole.publisher);
+
+      // sl.registerLazySingleton<Publisher>(() => publisherModel);
+
+      await SharedPrefHelper.storePersonLocallyByKey("publisherModel",publisherModel.toString());
+      await _storePersonToFirestore(publisher: publisherModel);
+
+      return publisherModel;
       // return UserModel.fromFirebaseUser(userCredential.user!);
     } on FirebaseAuthException catch (e) {
       logger.log("AuthenticationDataSource:publisherSignIn()", "$e");
@@ -422,13 +653,30 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
       logger.log("AuthenticationDataSource",
           "New publisher signed up: $userCredential");
 
-      return PublisherModel(
-          name: userCredential.user!.displayName ?? "UnnamedUser",
-          email: userCredential.user!.email ?? "NoEmail!",
-          isEmailVerified: userCredential.user!.emailVerified,
+      User user = userCredential.user!;
+      final String name = user.displayName ?? user.email!.split("@")[0];
+
+      PublisherModel publisherModel = PublisherModel(
+          name: name,
+          email: user.email!,
           about: "",
-          followersCount: 0);
-      // return UserModel.fromFirebaseUser(userCredential.user!);
+          followersCount: 0,
+          isEmailVerified: user.emailVerified,
+          creationTime: user.metadata.creationTime!,
+          lastSignInTime: user.metadata.lastSignInTime!,
+          authProvider: params.authProvider,
+          refreshToken: user.refreshToken!,
+          uid: user.uid
+      );
+      publisherModel.personRoles.add(PersonRole.publisher);
+
+      // sl.registerLazySingleton<Publisher>(() => publisherModel);
+
+      await SharedPrefHelper.storePersonLocallyByKey("publisherModel",publisherModel.toString());
+      await _storePersonToFirestore(publisher: publisherModel);
+
+      return publisherModel;
+
     } on FirebaseAuthException catch (e) {
       logger.log("AuthenticationDataSource:publisherSignUp()", "$e");
 
@@ -477,18 +725,18 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
       var user = FirebaseAuth.instance.currentUser;
 
       if (user != null) {
-          user.reload();
-          user.sendEmailVerification();
+        user.reload();
+        user.sendEmailVerification();
 
-          return Future.value(unit);
+        return Future.value(unit);
       } else {
         throw NoUserException();
       }
     } on FirebaseAuthException catch (e) {
       switch (e.code) {
         case "too-many-requests":
-        // Thrown if the user sent too many requests at the same time, for security
-        // the api will not allow too many attemps at the same time, user will have to wait for some time
+          // Thrown if the user sent too many requests at the same time, for security
+          // the api will not allow too many attemps at the same time, user will have to wait for some time
           throw TooManyRequestsException();
         default:
           logger.log(
@@ -508,15 +756,15 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
     logger.log("AuthenticationDataSource:signOut()", "started");
     try {
       await FirebaseAuth.instance.signOut();
-        return Future.value(unit);
-
+      return Future.value(unit);
     } on FirebaseAuthException catch (e) {
       switch (e.code) {
         default:
-          logger.log(
-              "AuthenticationDataSource:signOut()", "Unknown error.");
+          logger.log("AuthenticationDataSource:signOut()", "Unknown error.");
       }
       throw ServerException();
     }
   }
+
+
 }

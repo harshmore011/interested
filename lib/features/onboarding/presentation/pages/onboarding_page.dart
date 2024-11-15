@@ -37,8 +37,8 @@ class _OnboardingPageState extends State<OnboardingPage> {
   Widget build(BuildContext context) {
     return SafeArea(
         child: Scaffold(
-          appBar: AppBar(
-            backgroundColor: Colors.white,
+          appBar: AppBar(automaticallyImplyLeading: false,
+            // backgroundColor: Colors.white,
             title: const Text("interested!", style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold,
             fontStyle: FontStyle.italic, fontSize: 18),),
             actions: [
@@ -63,37 +63,41 @@ class _OnboardingPageState extends State<OnboardingPage> {
               final onboardingModel = state.onboardingModel;
              final device = MediaQuery.sizeOf(context);
              final deviceWidth = device.width;
-             // final deviceHeight = device.height;
+             final deviceHeight = device.height;
 
               return SingleChildScrollView(
                 // physics: BouncingScrollPhysics(),
                 // controller: ,
                 child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      color: AppTheme.colorPrimary,
+                      // color: AppTheme.colorPrimary.withOpacity(0.75),
+                      color: Colors.white,
                       // width: deviceWidth,
-                      width: deviceWidth < Constant.STANDARD_TABLET_WIDTH ? deviceWidth : deviceWidth*0.65,
+                      width: deviceWidth < Constant.STANDARD_TABLET_WIDTH ? deviceWidth : deviceWidth*0.62,
                       // height: size.height,
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.only(left: 24,top: 24,bottom: 24),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Container(
                             // padding: const EdgeInsets.all(16),
-                            padding: const EdgeInsets.only(top: 16, bottom: 16, right: 16),
+                            padding: const EdgeInsets.only(top: 16, bottom: 16, left: 16),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Container(
-                                  width: deviceWidth < Constant.STANDARD_TABLET_WIDTH ? deviceWidth*0.8 :deviceWidth*0.5,
-                                  height: deviceWidth < Constant.STANDARD_TABLET_WIDTH ? 200 : 300,
+                                  width: deviceWidth < Constant.STANDARD_TABLET_WIDTH ? deviceWidth*0.7 :deviceWidth*0.58,
+                                  height: deviceWidth < Constant.STANDARD_TABLET_WIDTH ? 200 : 400,
                                   // alignment: ,
-                                  padding: EdgeInsets.only(left: 50,top: 40),
+                                  padding: EdgeInsets.only(right: 20,top: 40),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
-                                    // color: AppTheme.colorPrimary,
+                                    // color: ,
                                     borderRadius: BorderRadius.only(topRight: Radius.circular(12), bottomRight: Radius.circular(12)),
                                     // borderRadius: BorderRadius.circular(12),
                                     // gradient: LinearGradient(colors: [Colors.white]),
@@ -104,12 +108,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                         blurRadius: 6.0,
                                       ),
                                     ],
-                                    /*image: DecorationImage(
+                                    image: DecorationImage(
+                                      // scale: 0.5,
+                                      fit: BoxFit.scaleDown,
                                       // colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.25), BlendMode.dstATop),
-                                      alignment: Alignment.centerRight,
+                                      alignment: Alignment.centerLeft,
                                       opacity: 0.8,
-                                      image: onboardingModel.bannerImages.first.image,
-                                     *//* NetworkImage(
+                                      image: MemoryImage(onboardingModel.bannerImages.first,),
+                                     /* NetworkImage(
                                       "https://firebasestorage.googleapis.com/v0/b/interested-project-011.appspot.com"
                                           "/o/onboarding%2Ftagline.jpg?alt=media&token=d270c47c-b75f-43b8-b9c3-931b05b09385"
                                         , width: 300, height: 300,
@@ -117,23 +123,26 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                       fit: BoxFit.scaleDown,
                                     ),*/
                                   ),
+                                  ),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
-                                      Text(onboardingModel.businessName,
-                                        style: const TextStyle(
-                                          // color: Colors.black,
-                                            fontWeight: FontWeight.bold,
-                                          fontStyle: FontStyle.italic, fontSize: 24),),
+                                      Center(
+                                        child: Text(onboardingModel.businessName,
+                                          style: const TextStyle(
+                                            // color: Colors.black,
+                                              fontWeight: FontWeight.bold,
+                                            fontStyle: FontStyle.italic, fontSize: 24),),
+                                      ),
                                       const SizedBox(
-                                        height: 24,
+                                        height: 72,
                                       ),
                                       ConstrainedBox(
-                                        constraints: const BoxConstraints(maxWidth: 260),
+                                        constraints: const BoxConstraints(maxWidth: 350),
                                         child: Text('"${onboardingModel.businessTagline}"',
                                              softWrap: true,
                                              style: const TextStyle(color: Colors.black,fontWeight: FontWeight.bold,
-                                                 fontSize: 26),),
+                                                 fontSize: 36),),
                                       )
                                     ],
                                   ),
@@ -146,7 +155,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             padding: const EdgeInsets.only(top: 24,bottom: 24),
                             child: BenefitCardsList(benefits: onboardingModel.benefitsWithImages),
                           ),
-                          if(defaultTargetPlatform==TargetPlatform.android)...[
+                          /*if(defaultTargetPlatform==TargetPlatform.android)...[
                             MaterialButton(
                               color: Colors.white,
                               onPressed: (){
@@ -157,14 +166,18 @@ class _OnboardingPageState extends State<OnboardingPage> {
                             , child: const Text("Get Started!"),)
                           ] else...[ SizedBox(
                             width: 100,
-                          ),]
+                          ),],*/
                         ],
                       ),
                     ),
                     Container(
                       width: deviceWidth < Constant.STANDARD_TABLET_WIDTH ? deviceWidth : deviceWidth*0.35,
+                      height: deviceHeight,
                       color: Colors.white,
-                      child: AuthenticationPage(),
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 30.0),
+                        child: AuthenticationPage(),
+                      ),
                     )
                   ],
                 ),

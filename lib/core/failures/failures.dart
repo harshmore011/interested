@@ -27,3 +27,5 @@ class TooManyRequestsFailure extends Failure {}
 class WrongPasswordFailure extends Failure {}
 
 class InvalidCredentialsFailure extends Failure {}
+
+class MissingRequiredArgumentsFailure extends Failure {}

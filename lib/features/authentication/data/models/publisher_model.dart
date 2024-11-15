@@ -1,36 +1,119 @@
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../../core/utils/debug_logger.dart';
+import '../../domain/entities/auth.dart';
 import '../../domain/entities/publisher_entity.dart';
 
 class PublisherModel extends Publisher {
 
-  const PublisherModel({required super.name, required super.email, required super.isEmailVerified
-  ,required super.about, required super.followersCount,});
+   PublisherModel({
+    required super.name,
+    required super.email,
+    required super.isEmailVerified,
+    required super.about,
+    required super.followersCount,
+    required super.creationTime,
+    required super.lastSignInTime,
+    required super.authProvider,
+    required super.refreshToken,
+    required super.uid,
+  });
 
-  factory PublisherModel.fromFirestore(
-      DocumentSnapshot<Map<String, dynamic>> snapshot,
-      SnapshotOptions? options,
-      ) {
-    final data = snapshot.data();
-    logger.log("","Onboarding model data: $data");
+/*  @override
+  PublisherModel copyWith({
+    String? name,
+    String? email,
+    bool? isEmailVerified,
+    String? about,
+    int? followersCount,
+    DateTime? creationTime,
+    DateTime? lastSignInTime,
+    AuthenticationProvider? authProvider,
+    String? refreshToken,
+    String? uid,
+  }) {
     return PublisherModel(
-      name: data?['name'],
-      email: data?['email'],
-      isEmailVerified: data?['isEmailVerified'],
-      about: data?['about'],
-      followersCount: data?['followersCount'],
+      name: name ?? this.name,
+      email: email ?? this.email,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      about: about ?? this.about,
+      followersCount: followersCount ?? this.followersCount,
+      creationTime: creationTime ?? this.creationTime,
+      lastSignInTime: lastSignInTime ?? this.lastSignInTime,
+      authProvider: authProvider ?? this.authProvider,
+      refreshToken: refreshToken ?? this.refreshToken,
+      uid: uid ?? this.uid,
     );
+  }*/
+
+  factory PublisherModel.fromJson(Map<String, dynamic> json) {
+    PublisherModel publisherModel = PublisherModel(
+      name: json['name'],
+      email: json['email'],
+      isEmailVerified: json['isEmailVerified'],
+      about: json['about'],
+      followersCount: json['followersCount'],
+      creationTime: DateTime.parse(json['creationTime'].toDate().toString()),
+      lastSignInTime: DateTime.parse(json['lastSignInTime'].toDate().toString()),
+      authProvider: AuthenticationProvider.values.byName(json['authProvider']),
+      refreshToken: json['refreshToken'],
+      uid: json['uid'],
+    );
+
+    publisherModel.personRoles.addAll(json['personRoles']
+        .map<PersonRole>((role) => PersonRole.values.byName(role))
+        .toList() as List<PersonRole>);
+
+    return publisherModel;
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toJson() {
     return {
       "name": name,
       "email": email,
       "isEmailVerified": isEmailVerified,
       "about": about,
       "followersCount": followersCount,
+      "creationTime": creationTime,
+      // "creationTime": creationTime.toIso8601String(),
+      "lastSignInTime": lastSignInTime,
+      // "lastSignInTime": lastSignInTime.toIso8601String(),
+      "authProvider": authProvider.name,
+      "refreshToken": refreshToken,
+      "uid": uid,
+      "personRoles": personRoles.map<String>((role) => role.name).toList(),
     };
   }
-  
+
+  factory PublisherModel.fromEntity(Publisher entity) {
+    PublisherModel publisherModel = PublisherModel(
+      name: entity.name,
+      email: entity.email,
+      isEmailVerified: entity.isEmailVerified,
+      about: entity.about,
+      followersCount: entity.followersCount,
+      creationTime: entity.creationTime,
+      lastSignInTime: entity.lastSignInTime,
+      authProvider: entity.authProvider,
+      refreshToken: entity.refreshToken,
+      uid: entity.uid,
+    );
+    publisherModel.setPersonRoles(entity.getPersonRoles());
+    return publisherModel;
+  }
+
+  Publisher toEntity() {
+    Publisher publisher = Publisher(
+      name: name,
+      email: email,
+      isEmailVerified: isEmailVerified,
+      about: about,
+      followersCount: followersCount,
+      creationTime: creationTime,
+      lastSignInTime: lastSignInTime,
+      authProvider: authProvider,
+      refreshToken: refreshToken,
+      uid: uid,
+    );
+    publisher.setPersonRoles(personRoles);
+    return publisher;
+  }
+
 }

@@ -4,7 +4,7 @@ class Constant {
   // Common Failure Messages
   static const String SERVER_FAILURE_MESSAGE = 'Unexpected error. Please try again later.';
   static const String OFFLINE_FAILURE_MESSAGE = 'Please Check your Internet Connection!';
-  static const String DATA_NOT_FOUND_MESSAGE = 'Requested data not found!';
+  static const String DATA_NOT_FOUND_MESSAGE = 'Requested data was not found!';
 
   // Auth Failure Messages
   static const String WEEK_PASS_FAILURE_MESSAGE = "Please use a stronger password.";

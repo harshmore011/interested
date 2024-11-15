@@ -20,6 +20,8 @@ abstract class AuthenticationRepository {
  //  Future<Either<Failure, User>> userSignIn(AuthProvider authProvider, {EmailAuthCredential credential});
  //  Future<Either<Failure, Publisher>> publisherSignUp(AuthProvider authProvider, {EmailAuthCredential credential});
  //  Future<Either<Failure, Publisher>> publisherSignIn(AuthProvider authProvider, {EmailAuthCredential credential});
+  Future<Either<Failure, Unit>> switchToUser();
+  Future<Either<Failure, Unit>> switchToPublisher();
   Future<Either<Failure, Unit>> verifyEmail();
   Future<Either<Failure, Unit>> forgotPassword();
   Future<Either<Failure, Unit>> signOut();
