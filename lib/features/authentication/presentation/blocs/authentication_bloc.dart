@@ -145,26 +145,26 @@ class AuthenticationBloc
   String _mapFailureToMessage(Failure failure) {
     logger.log("AuthenticationBloc:_mapFailureToMessage()", "failureType: ${failure.runtimeType}");
     switch (failure.runtimeType) {
-      case OfflineFailure:
+      case const (OfflineFailure):
         return Constant.OFFLINE_FAILURE_MESSAGE;
-        case ServerFailure:
+        case const (ServerFailure):
         return Constant.SERVER_FAILURE_MESSAGE;
-      case DataNotFoundFailure:
+      case const (DataNotFoundFailure):
         return Constant.DATA_NOT_FOUND_MESSAGE;
-      case NoUserFailure:
+      case const (NoUserFailure):
         return Constant.NO_USER_FAILURE_MESSAGE;
-      case TooManyRequestsFailure:
+      case const (TooManyRequestsFailure):
         return Constant.TOO_MANY_REQUESTS_FAILURE_MESSAGE;
-      case EmailAlreadyInUseFailure:
+      case const (EmailAlreadyInUseFailure):
         logger.log("AuthenticationBloc:_mapFailureToMessage()", "INSIDE EmailAlreadyInUseFailure");
         return Constant.EMAIL_ALREADY_IN_USE_FAILURE_MESSAGE;
-      case InvalidEmailFailure:
+      case const (InvalidEmailFailure):
         return Constant.INVALID_EMAIL_FAILURE_MESSAGE;
-      case WeakPasswordFailure:
+      case const (WeakPasswordFailure):
         return Constant.WEAK_PASSWORD_FAILURE_MESSAGE;
-      case WrongPasswordFailure:
+      case const (WrongPasswordFailure):
         return Constant.WRONG_PASSWORD_FAILURE_MESSAGE;
-      case InvalidCredentialsFailure:
+      case const (InvalidCredentialsFailure):
         return Constant.INVALID_CREDENTIALS_FAILURE_MESSAGE;
         default:
           return "Unexpected Error , Please try again later .";

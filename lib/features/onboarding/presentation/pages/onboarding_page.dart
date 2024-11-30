@@ -1,13 +1,10 @@
 
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:interested/features/authentication/presentation/pages/authentication_page.dart';
 
-import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/constants.dart';
-import '../../../../core/utils/snackbar_message.dart';
+import '../../../authentication/presentation/pages/authentication_page.dart';
 import '../blocs/onboarding_bloc.dart';
 import '../blocs/onboarding_event.dart';
 import '../blocs/onboarding_state.dart';
@@ -94,7 +91,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   width: deviceWidth < Constant.STANDARD_TABLET_WIDTH ? deviceWidth*0.7 :deviceWidth*0.58,
                                   height: deviceWidth < Constant.STANDARD_TABLET_WIDTH ? 200 : 400,
                                   // alignment: ,
-                                  padding: EdgeInsets.only(right: 20,top: 40),
+                                  padding: EdgeInsets.only(right: 20,top: 20),
                                   decoration: BoxDecoration(
                                     color: Colors.white,
                                     // color: ,
@@ -113,7 +110,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                       fit: BoxFit.scaleDown,
                                       // colorFilter: ColorFilter.mode(Colors.black.withOpacity(0.25), BlendMode.dstATop),
                                       alignment: Alignment.centerLeft,
-                                      opacity: 0.8,
+                                      opacity: 0.7,
                                       image: MemoryImage(onboardingModel.bannerImages.first,),
                                      /* NetworkImage(
                                       "https://firebasestorage.googleapis.com/v0/b/interested-project-011.appspot.com"
@@ -125,14 +122,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
                                   ),
                                   ),
                                   child: Column(
+                                    mainAxisSize: MainAxisSize.min,
                                     crossAxisAlignment: CrossAxisAlignment.end,
                                     children: [
                                       Center(
-                                        child: Text(onboardingModel.businessName,
+                                        child: Text("${onboardingModel.businessName}!",
                                           style: const TextStyle(
                                             // color: Colors.black,
                                               fontWeight: FontWeight.bold,
-                                            fontStyle: FontStyle.italic, fontSize: 24),),
+                                            fontStyle: FontStyle.italic, fontSize: 26),),
                                       ),
                                       const SizedBox(
                                         height: 72,
@@ -150,11 +148,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
                               ],
                             ),
                           ),
-                          Container(
-                            // color: Colors.white,
-                            padding: const EdgeInsets.only(top: 24,bottom: 24),
-                            child: BenefitCardsList(benefits: onboardingModel.benefitsWithImages),
+                          Flexible(
+                            child: Container(
+                              height: 440,
+                              // color: Colors.white,
+                              padding: const EdgeInsets.only(top: 24,bottom: 24),
+                              child: BenefitCardsList(benefits: onboardingModel.benefitsWithImages),
+                            ),
                           ),
+                          const SizedBox(height: 75,),
                           /*if(defaultTargetPlatform==TargetPlatform.android)...[
                             MaterialButton(
                               color: Colors.white,

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -24,20 +25,62 @@ class _SignInCardState extends State<SignInCard> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscureText = true;
-  late final PersonRole _personRole;
+  PersonRole? _personRole;
 
   @override
   void initState() {
     // TODO: implement initState
-    super.initState();
+    logger.log("SignInCard", "initState");
 
     _personRole = widget.personRole;
-    _emailController.text = 'Harshmore011@gmail.com';
-    _passwordController.text = 'ThisIs@123';
+    if(kDebugMode) {
+      _emailController.text = 'Harshmore011@gmail.com';
+      _passwordController.text = 'ThisIs@123';
+    }
+    super.initState();
+
+  }
+  
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    logger.log("SignInCard", "dispose");
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void deactivate() {
+    logger.log("SignInCard", "deactivate");
+    super.deactivate();
+
+
+  }
+
+  @override
+  void didChangeDependencies() {
+    logger.log("SignInCard", "didChangeDependencies");
+    super.didChangeDependencies();
+
+  }
+
+  @override
+  void didUpdateWidget(SignInCard oldWidget) {
+    logger.log("SignInCard", "didUpdateWidget");
+
+    _personRole = widget.personRole;
+    logger.log("SignInCard", "didUpdateWidget: _personRole: ${widget.personRole}");
+    logger.log("SignInCard", "didUpdateWidget: old _personRole: ${oldWidget.personRole}");
+
+    super.didUpdateWidget(oldWidget);
+
   }
 
   @override
   Widget build(BuildContext context) {
+    logger.log("SignInCard: build", "started");
+
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12.0),

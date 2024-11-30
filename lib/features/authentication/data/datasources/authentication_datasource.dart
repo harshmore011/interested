@@ -1,10 +1,11 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:interested/core/utils/debug_logger.dart';
 
-import '../../../../core/di/dependency_injector.dart';
 import '../../../../core/failures/exceptions.dart';
+import '../../../../core/utils/debug_logger.dart';
 import '../../../../core/utils/shared_pref_helper.dart';
 import '../../domain/entities/auth.dart';
 import '../models/anonymous_model.dart';
@@ -36,60 +37,28 @@ abstract class AuthenticationDataSource {
 }
 
 class AuthenticationDataSourceImpl implements AuthenticationDataSource {
-/*  @override
-  Future<OnboardingModel> getOnboardingData() async {
 
-    // supportingImage: Image.network("https://firebasestorage.googleapis.com/v0/b/interested-project-011.appspot.com/o/onboarding%2Fexplore.svg?alt=media&token=6ccddbd7-b8b9-4b5a-8efd-6aa3b15d6be0")
-
-    try {
-
-      var db = FirebaseFirestore.instance;
-
-      var ref = db.collection("onboarding_data")
-      .doc("getOnboardingData")
-      .withConverter(fromFirestore: OnboardingModel.fromFirestore,
-          toFirestore: (OnboardingModel onboardingModel, _) => onboardingModel.toFirestore());
-
-      final docSnap = await ref.get();
-      final onboardingModel = docSnap.data(); // Convert to object
-      if (onboardingModel != null) {
-        debugPrint("Onboarding model data: $onboardingModel");
-        await _mapOnboardingImages(onboardingModel);
-
-      } else {
-        debugPrint("No onboarding document found on server.");
-        throw OnboardingDataNotFoundException();
-      }
-
-      return onboardingModel;
-        // return OnboardingModel.fromFirestore(onboardingData, null);
-
-    } on FirebaseException catch (e) {
-      debugPrint(e.toString());
-      // throw ServerException();
-      // throw Exception("Failed to get onboarding data: $e");
-      throw ServerException();
-    }
-
-  }
-*/
-
-  _storePersonToFirestore({AnonymousModel? anonymous, UserModel? user, PublisherModel? publisher}) async {
-
+  _storePersonToFirestore(
+      {AnonymousModel? anonymous,
+      UserModel? user,
+      PublisherModel? publisher}) async {
     final db = FirebaseFirestore.instance;
 
+
     if (anonymous != null) {
-     await db.collection("anonymous").doc(anonymous.uid).set(anonymous.toJson());
+      await db
+          .collection("anonymous")
+          .doc(anonymous.uid)
+          .set(anonymous.toJson());
     }
     if (user != null) {
       // check and add new user if does not already exists
       final userDocRef = db.collection("users").doc(user.email);
-     final userDoc = await userDocRef.get();
-     if (!userDoc.exists) {
-       await userDocRef.set(user.toJson());
-     }
-     _checkAndAddNewPersonRole(db, user.email, PersonRole.user);
-
+      final userDoc = await userDocRef.get();
+      if (!userDoc.exists) {
+        await userDocRef.set(user.toJson());
+      }
+      _checkAndAddNewPersonRole(db, user.email, PersonRole.user);
     }
     if (publisher != null) {
       // check and add new publisher if does not already exists
@@ -99,12 +68,11 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
         await publisherDocRef.set(publisher.toJson());
       }
       _checkAndAddNewPersonRole(db, publisher.email, PersonRole.publisher);
-
     }
-
   }
 
-  Future<void> _checkAndAddNewPersonRole(FirebaseFirestore? dbInstance, String email, PersonRole personCurrRole) async {
+  Future<void> _checkAndAddNewPersonRole(FirebaseFirestore? dbInstance,
+      String email, PersonRole personCurrRole) async {
     logger.log(
         "AuthenticationDataSource:_checkAndAddNewPersonRole()", "started");
     FirebaseFirestore db = dbInstance ?? FirebaseFirestore.instance;
@@ -124,17 +92,16 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
 
     // if same publisher already exists as user, check and add new user role in userModel
     if (personCurrRole == PersonRole.publisher) {
-    final userDocRef = db.collection("users").doc(email);
-    final userDoc = await userDocRef.get();
-    if (userDoc.exists) {
-      UserModel user = UserModel.fromJson(userDoc.data()!);
-      if (!user.personRoles.contains(PersonRole.publisher)) {
-        user.personRoles.add(PersonRole.publisher);
-        await userDocRef.update(user.toJson());
+      final userDocRef = db.collection("users").doc(email);
+      final userDoc = await userDocRef.get();
+      if (userDoc.exists) {
+        UserModel user = UserModel.fromJson(userDoc.data()!);
+        if (!user.personRoles.contains(PersonRole.publisher)) {
+          user.personRoles.add(PersonRole.publisher);
+          await userDocRef.update(user.toJson());
+        }
       }
     }
-  }
-
   }
 
   @override
@@ -170,8 +137,8 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
         uid: anonymousUser.uid,
       );
 
-
-      await SharedPrefHelper.storePersonLocallyByKey("anonymousModel",anonymous.toString());
+      await SharedPrefHelper.storePersonLocallyByKey(
+          "anonymousModel", jsonEncode(anonymous.toJson()));
       await _storePersonToFirestore(anonymous: anonymous);
 
       return anonymous;
@@ -225,14 +192,14 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
             lastSignInTime: user.metadata.lastSignInTime!,
             authProvider: params.authProvider,
             refreshToken: user.refreshToken!,
-            uid: user.uid
-        );
+            uid: user.uid);
 
         userModel.setPersonRoles([PersonRole.user]);
 
         // sl.registerLazySingleton<User>(() => userModel);
 
-        await SharedPrefHelper.storePersonLocallyByKey("userModel",userModel.toString());
+        await SharedPrefHelper.storePersonLocallyByKey(
+            "userModel", jsonEncode(userModel.toJson()));
         await _storePersonToFirestore(user: userModel);
 
         return userModel;
@@ -328,14 +295,13 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
           lastSignInTime: user.metadata.lastSignInTime!,
           authProvider: params.authProvider,
           refreshToken: user.refreshToken!,
-          uid: user.uid
-      );
+          uid: user.uid);
       userModel.personRoles.add(PersonRole.user);
-
 
       // sl.registerLazySingleton<User>(() => userModel);
 
-      await SharedPrefHelper.storePersonLocallyByKey("userModel",userModel.toString());
+      await SharedPrefHelper.storePersonLocallyByKey(
+          "userModel", jsonEncode(userModel.toJson()));
       await _storePersonToFirestore(user: userModel);
 
       return userModel;
@@ -417,15 +383,14 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
           lastSignInTime: user.metadata.lastSignInTime!,
           authProvider: params.authProvider,
           refreshToken: user.refreshToken!,
-          uid: user.uid
-      );
+          uid: user.uid);
 
       userModel.setPersonRoles([PersonRole.user]);
 
-
       // sl.registerLazySingleton<User>(() => userModel);
 
-      await SharedPrefHelper.storePersonLocallyByKey("userModel",userModel.toString());
+      await SharedPrefHelper.storePersonLocallyByKey(
+          "userModel", jsonEncode(userModel.toJson()));
       await _storePersonToFirestore(user: userModel);
 
       return userModel;
@@ -507,35 +472,40 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
   Future<void> switchToPublisher() async {
     logger.log("AuthenticationDataSource:switchToPublisher()", "");
 
-    UserModel userModel = sl<UserModel>();
+/*    if(!sl.isRegistered(instanceName: "currentUser")){
+      await SharedPrefHelper.reloadCurrentUser();
+    }*/
+
+    // User user = sl.get(instanceName: "currentUser");
+
     try {
-     final doc = await FirebaseFirestore.instance
+      final doc = await FirebaseFirestore.instance
           .collection("publishers")
-          .doc(userModel.email)
+          .doc("")
           .get();
 
       if (doc.exists) {
-        logger.log("AuthenticationDataSource:switchToPublisher()", "Publisher already exists");
+        logger.log("AuthenticationDataSource:switchToPublisher()",
+            "Publisher already exists");
 
-        PublisherModel publisherModel = PublisherModel.fromJson(doc.data()!);
+        // PublisherModel publisherModel = PublisherModel.fromJson(doc.data()!);
 
         return;
       } else {
         // New Publisher, so he needs to sign up as one first
-        logger.log("AuthenticationDataSource:switchToPublisher()", "Switching to publisher");
-        if(userModel.authProvider == AuthenticationProvider.emailPassword) {
+        logger.log("AuthenticationDataSource:switchToPublisher()",
+            "Switching to publisher");
+        /* if(user.authProvider == AuthenticationProvider.emailPassword) {
           // TODO: Show Authentication screen and then sign out as user
           throw NoUserException();
         } else if (userModel.authProvider == AuthenticationProvider.google) {
           publisherSignUp(AuthParams(authProvider: AuthenticationProvider.google));
-        }
+        }*/
       }
-
     } catch (e) {
       logger.log("AuthenticationDataSource:switchToPublisher()", "$e");
       throw ServerException();
     }
-
   }
 
   @override
@@ -543,8 +513,6 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
     // TODO: implement switchToUser
     throw UnimplementedError();
   }
-
-
 
   @override
   Future<PublisherModel> publisherSignIn(AuthParams params) async {
@@ -577,13 +545,13 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
           lastSignInTime: user.metadata.lastSignInTime!,
           authProvider: params.authProvider,
           refreshToken: user.refreshToken!,
-          uid: user.uid
-      );
+          uid: user.uid);
       publisherModel.personRoles.add(PersonRole.publisher);
 
       // sl.registerLazySingleton<Publisher>(() => publisherModel);
 
-      await SharedPrefHelper.storePersonLocallyByKey("publisherModel",publisherModel.toString());
+      await SharedPrefHelper.storePersonLocallyByKey(
+          "publisherModel", jsonEncode(publisherModel.toJson()));
       await _storePersonToFirestore(publisher: publisherModel);
 
       return publisherModel;
@@ -598,10 +566,6 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
           break;
         case "wrong-password":
           throw WrongPasswordException();
-        case "invalid-credential":
-          logger.log("AuthenticationDataSource:userSignIn()",
-              "The provider's credential is not valid.");
-          throw InvalidCredentialException();
         case "credential-already-in-use":
           logger.log(
               "AuthenticationDataSource:publisherSignIn()",
@@ -613,7 +577,7 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
           throw WeakPasswordException();
         case "too-many-requests":
           // Thrown if the user sent too many requests at the same time, for security
-          // the api will not allow too many attemps at the same time, user will have to wait for some time
+          // the api will not allow too many attempts at the same time, user will have to wait for some time
           throw TooManyRequestsException();
         // case "user-token-expired":
         // Thrown if the user is no longer authenticated since his refresh token has been expired
@@ -666,17 +630,16 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
           lastSignInTime: user.metadata.lastSignInTime!,
           authProvider: params.authProvider,
           refreshToken: user.refreshToken!,
-          uid: user.uid
-      );
+          uid: user.uid);
       publisherModel.personRoles.add(PersonRole.publisher);
 
       // sl.registerLazySingleton<Publisher>(() => publisherModel);
 
-      await SharedPrefHelper.storePersonLocallyByKey("publisherModel",publisherModel.toString());
+      await SharedPrefHelper.storePersonLocallyByKey(
+          "publisherModel", jsonEncode(publisherModel.toJson()));
       await _storePersonToFirestore(publisher: publisherModel);
 
       return publisherModel;
-
     } on FirebaseAuthException catch (e) {
       logger.log("AuthenticationDataSource:publisherSignUp()", "$e");
 
@@ -765,6 +728,4 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
       throw ServerException();
     }
   }
-
-
 }

@@ -33,8 +33,8 @@ class OnboardingDataSourceImpl implements OnboardingDataSource {
 
       var db = FirebaseFirestore.instance;
 
-      var ref = db.collection("onboarding_data")
-      .doc("getOnboardingData")
+      var ref = db.collection("onboarding")
+      .doc("onboarding_data")
       .withConverter(fromFirestore: OnboardingModel.fromFirestore,
           toFirestore: (OnboardingModel onboardingModel, _) => onboardingModel.toFirestore());
 
@@ -104,14 +104,14 @@ class OnboardingDataSourceImpl implements OnboardingDataSource {
     List<Benefit> benefitsList = [];
 
     for (var item in items) {
-      logger.log("OnboardingDataSource","OnboardingPage:itemsString: ${ item.toString()}");
+      // logger.log("OnboardingDataSource","OnboardingPage:itemsString: ${ item.toString()}");
       var bytes = await item.getData();
 
       // var supportingImage = Image.memory(bytes!, width: 200, height: 200,);
       for(var benefit in benefits) {
         if("${benefit["benefit"].toString().toLowerCase()}.jpg" == item.name) {
         // if(item.name.contains("other")) {
-          logger.log("OnboardingDataSource","OnboardingPage:itemsName: ${ item.name} == ${benefit["benefit"]}.jpg");
+        //   logger.log("OnboardingDataSource","OnboardingPage:itemsName: ${ item.name} == ${benefit["benefit"]}.jpg");
           benefitsList.add(Benefit(benefit: benefit["benefit"], description: benefit["description"], supportingImage: bytes!));
           break;
         }

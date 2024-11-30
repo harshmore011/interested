@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -20,20 +21,35 @@ class SignUpCard extends StatefulWidget {
 }
 
 class _SignUpCardState extends State<SignUpCard> {
+
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscureText = true;
-  late PersonRole _personRole;
+  PersonRole? _personRole;
 
   @override
   void initState() {
-    // TODO: implement initState
+    if(kDebugMode) {
+      _emailController.text = 'Harshmore011@gmail.com';
+      _passwordController.text = 'ThisIs@123';
+    }
     super.initState();
+  }
 
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
-    _emailController.text = 'Harshmore011@gmail.com';
-    _passwordController.text = 'ThisIs@123';
+  @override
+  void didUpdateWidget(covariant SignUpCard oldWidget) {
+    _personRole = widget.personRole;
+    logger.log("SignUpCard: didUpdateWidget", "personRole: $_personRole");
+    logger.log("SignUpCard: didUpdateWidget", "old personRole: ${oldWidget.personRole}");
+    super.didUpdateWidget(oldWidget);
   }
 
   @override
@@ -58,7 +74,8 @@ class _SignUpCardState extends State<SignUpCard> {
           mainAxisSize: MainAxisSize.min,
           // crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(_personRole == PersonRole.user ? "User Sign Up" :
+            Text(_personRole == PersonRole.user || _personRole == PersonRole.anonymous
+                ? "User Sign Up" :
               "Publisher Sign Up",
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
@@ -76,7 +93,7 @@ class _SignUpCardState extends State<SignUpCard> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     ConstrainedBox(
-                      constraints: BoxConstraints(maxWidth: 300),
+                      constraints: const BoxConstraints(maxWidth: 300),
                       child: TextFormField(
                         controller: _emailController,
                         decoration: const InputDecoration(
@@ -96,14 +113,14 @@ class _SignUpCardState extends State<SignUpCard> {
                       height: 20,
                     ),
                     ConstrainedBox(
-                      constraints: BoxConstraints(
+                      constraints:const  BoxConstraints(
                         maxWidth: 300,
                       ),
                       child: TextFormField(
                         controller: _passwordController,
                         obscureText: _obscureText ? true : false,
                         decoration: InputDecoration(
-                          border: OutlineInputBorder(),
+                          border: const OutlineInputBorder(),
                           labelText: 'Password',
                           suffixIcon: IconButton(
                             icon: Icon(
@@ -150,7 +167,11 @@ class _SignUpCardState extends State<SignUpCard> {
                                       password:
                                       _passwordController.text));
 
-                              if (_personRole == PersonRole.user) {
+                              if (_personRole == PersonRole.anonymous) {
+                                event = AnonymousToUserEvent(
+                                  params: params,
+                                );
+                              } else if (_personRole == PersonRole.user) {
                                 event = UserSignUpEvent(
                                   params: params,
                                 );
@@ -251,7 +272,11 @@ class _SignUpCardState extends State<SignUpCard> {
                                 authProvider: AuthenticationProvider
                                     .google,);
 
-                            if (_personRole == PersonRole.user) {
+                            if (_personRole == PersonRole.anonymous) {
+                              event = AnonymousToUserEvent(
+                                params: params,
+                              );
+                            } else if (_personRole == PersonRole.user) {
                               event = UserSignUpEvent(
                                 params: params,
                               );
@@ -317,6 +342,7 @@ class _SignUpCardState extends State<SignUpCard> {
               logger.log("SignInCard: LISTENER","current state: ${state.runtimeType}");
 
               if (state is AnonymousSignedInState ||
+                  state is AnonymousLinkedToUserState ||
                   state is UserSignedUpState) {
                 Navigator.of(context).pushNamed("/homePage");
               } else if (state is PublisherSignedUpState) {
@@ -332,6 +358,7 @@ class _SignUpCardState extends State<SignUpCard> {
                   current is !SignedOutState;*/
                 return current is UserSignedUpState ||
                     current is PublisherSignedUpState ||
+                    current is AnonymousLinkedToUserState ||
                     current is AnonymousSignedInState ||
                     current is FailureState;
               }

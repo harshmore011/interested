@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:interested/features/onboarding/domain/entities/onboarding_entity.dart';
 
+import '../../domain/entities/onboarding_entity.dart';
 import 'benefit_card.dart';
 
 class BenefitCardsList extends StatefulWidget {
@@ -20,44 +20,19 @@ class _BenefitCardsListState extends State<BenefitCardsList> {
     debugPrint("benefitsLength: ${benefits.length}");
     // <orderEntry type="jdk" jdkName="Android API 34, extension level 7 Platform" jdkType="Android SDK" />
 
-    return Wrap(
-      children: [
-        SizedBox(
-        height: 400,
-        // constraints: BoxConstraints(maxHeight: 400),
-        // width: 500,
-        child: Flexible(
-          child: ListView.builder(
-            // controller: ScrollController().,
-            // shrinkWrap: true,
-            itemBuilder: (context, index) {
-             return BenefitCard(benefit: benefits[index]);
+    return ListView.builder(
+      // controller: ScrollController().,
+      // shrinkWrap: true,
+      itemBuilder: (context, index) {
+       return BenefitCard(benefit: benefits[index]);
 
-              // return _getBenefitCards(benefits)[index];
-            },
-            itemCount: benefits.length,
-            scrollDirection: Axis.horizontal,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-          ),
-        ),
-      )
-      ],
+        // return _getBenefitCards(benefits)[index];
+      },
+      itemCount: benefits.length,
+      scrollDirection: Axis.horizontal,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
     );
   }
 
- List<Widget> _getBenefitCards(List<Benefit> benefits) {
-    List<Widget> benefitCards = [];
-
-    for (var benefit in benefits) {
-      benefitCards.add(
-        BenefitCard(benefit: benefit),
-      );
-      benefitCards.add(const SizedBox(
-        width: 40,
-      ));
-    }
-    return benefitCards;
-    // return Container();
-  }
 }

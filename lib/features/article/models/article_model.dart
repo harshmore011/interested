@@ -1,14 +1,13 @@
-import 'dart:convert';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:interested/features/article/entities/article_entity.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
+import 'package:equatable/equatable.dart';
 
 import '../../../core/utils/debug_logger.dart';
 import '../../authentication/data/models/publisher_model.dart';
-import '../../authentication/data/models/user_model.dart';
 import '../article.dart';
+import '../entities/article_entity.dart';
 
-class ArticleModel {
+class ArticleModel extends Equatable {
   final String? id;
   final String title;
   final String description;
@@ -31,6 +30,11 @@ class ArticleModel {
   final PublisherModel publisherModel;
 
   factory ArticleModel.fromJson(Map<String, dynamic> json) {
+    logger.log(
+      'ArticleModel.fromJson',
+      'json: $json',
+    );
+
     ArticleModel articleModel = ArticleModel(
       id: json['id'],
       title: json['title'],
@@ -79,10 +83,12 @@ class ArticleModel {
     articleModel.images.addAll(json['images']
         .map<String>((image) => "$image")
         .toList() as List<String>);
-    articleModel.commentModels.addAll(json['comments']
+   /* if (json['comments'] != null) {
+      articleModel.commentModels.addAll(json['comments']
         .map<CommentModel>(
             (commentModel) => CommentModel.fromJson(commentModel))
         .toList() as List<CommentModel>);
+    }*/
 
     return articleModel;
   }
@@ -115,7 +121,7 @@ class ArticleModel {
       'labels': labels,
       'currentState': currentState.name,
       'currentPublishState': currentPublishState.name,
-      'comments': commentModels.map((comment) => comment.toJson()).toList(),
+      'comments': commentModels.map<Map<String, dynamic>>((comment) => comment.toJson()).toList(),
       'publisher': publisherModel.toJson(),
       'dateTimeCreated': dateTimeCreated,
       'dateTimeModified': dateTimeModified,
@@ -158,20 +164,46 @@ class ArticleModel {
     article.labels.addAll(labels);
     article.images.addAll(images);
     article.comments
-        .addAll(commentModels.map((comment) => comment.toEntity()).toList());
+        .addAll(commentModels.map<Comment>((comment) => comment.toEntity()).toList());
 
     return article;
   }
+
+  @override
+  // TODO: implement props
+  List<Object?> get props => [
+        id,
+        title,
+        description,
+        url,
+        labels,
+        currentState,
+        currentPublishState,
+        commentModels,
+        publisherModel,
+        dateTimeCreated,
+        dateTimeModified,
+        dateTimeScheduled,
+        dateTimePublished,
+        dateTimeDeleted,
+        images,
+        views,
+        likes,
+        saves,
+  ];
 }
 
-class CommentModel {
+class CommentModel extends Equatable {
+  final String? id;
   final String comment;
-  final UserModel user;
+  // final UserModel user;
+  final String user;
   final bool isLikedByPublisher;
   final List<ReplyModel> replies = [];
   final DateTime dateTimeCommented;
 
   CommentModel({
+    this.id,
     required this.comment,
     required this.user,
     // required this.replies,
@@ -181,9 +213,11 @@ class CommentModel {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'comment': comment,
-      'user': user.toJson(),
-      'replies': replies.map((reply) => reply.toJson()).toList(),
+      'user': user,
+      // 'user': user.toJson(),
+      'replies': replies.map<Map<String, dynamic>>((reply) => reply.toJson()).toList(),
       'isLikedByPublisher': isLikedByPublisher,
       // 'dateTimeCommented': dateTimeCommented.toIso8601String(),
       'dateTimeCommented': dateTimeCommented,
@@ -192,15 +226,18 @@ class CommentModel {
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
     CommentModel commentModel = CommentModel(
+      id: json['id'],
       comment: json['comment'],
-      user: UserModel.fromJson(json['user']),
+      user: json['user'],
+      // user: UserModel.fromJson(json['user']),
       // replies:
       //     json['replies']?.map((reply) => ReplyModel.fromJson(reply)).toList(),
       isLikedByPublisher: json['isLikedByPublisher'],
-      dateTimeCommented: DateTime.parse(json['dateTimeCommented'].toDate().toString()),
+      dateTimeCommented: DateTime.parse(json['dateTimeCommented'] is Timestamp ?
+      json['dateTimeCommented'].toDate().toString() : json['dateTimeCommented']),
     );
-    commentModel.replies.addAll(jsonDecode(json['replies'])
-        ?.map((reply) => ReplyModel.fromJson(reply))
+    commentModel.replies.addAll(json['replies']
+        ?.map<ReplyModel>((reply) => ReplyModel.fromJson(reply))
         .toList());
 
     return commentModel;
@@ -208,36 +245,45 @@ class CommentModel {
 
   Comment toEntity() {
     Comment comment = Comment(
+      id: id,
       comment: this.comment,
-      user: user.toEntity(),
-      replies: replies.map((reply) => reply.toEntity()).toList(),
+      // user: user.toEntity(),
+      user: user,
+      // replies: replies.map((reply) => reply.toEntity()).toList(),
       isLikedByPublisher: isLikedByPublisher,
       dateTimeCommented: dateTimeCommented,
     );
 
-    // comment.replies.addAll(replies.map((reply) => reply.toEntity()).toList());
+    comment.replies.addAll(replies.map<Reply>((reply) => reply.toEntity()).toList());
     return comment;
   }
+
+  @override
+  List<Object?> get props => [id, comment, user, isLikedByPublisher, replies, dateTimeCommented,];
 }
 
-class ReplyModel {
+class ReplyModel extends Equatable {
   final String reply;
   final DateTime dateTimeReplied;
-  final PublisherModel publisherModel;
-  final UserModel userModel;
+  final String? publisher;
+  // final PublisherModel publisherModel;
+  final String? user;
+  // final UserModel userModel;
 
   const ReplyModel({
     required this.reply,
     required this.dateTimeReplied,
-    required this.userModel,
-    required this.publisherModel,
+     this.user,
+     this.publisher,
   });
 
   Map<String, dynamic> toJson() {
     return {
       'reply': reply,
-      'user': userModel.toJson(),
-      'publisher': publisherModel.toJson(),
+      // 'user': userModel.toJson(),
+      // 'publisher': publisherModel.toJson(),
+      'user': user,
+      'publisher': publisher,
       'dateTimeReplied': dateTimeReplied,
       // 'dateTimeReplied': dateTimeReplied.toIso8601String(),
     };
@@ -246,9 +292,13 @@ class ReplyModel {
   factory ReplyModel.fromJson(Map<String, dynamic> json) {
     return ReplyModel(
       reply: json['reply'],
-      dateTimeReplied: DateTime.parse(json['dateTimeReplied'].toDate().toString()),
-      userModel: UserModel.fromJson(json['user']),
-      publisherModel: PublisherModel.fromJson(json['publisher']),
+      // dateTimeReplied: DateTime.parse(json['dateTimeReplied'].toDate().toString()),
+      dateTimeReplied: DateTime.parse(json['dateTimeReplied'] is Timestamp ?
+      json['dateTimeReplied'].toDate().toString() : json['dateTimeReplied']),
+      // userModel: UserModel.fromJson(json['user']),
+      // publisherModel: PublisherModel.fromJson(json['publisher']),
+      user: json['user'],
+      publisher: json['publisher'],
     );
   }
 
@@ -256,11 +306,16 @@ class ReplyModel {
     Reply reply = Reply(
       reply: this.reply,
       dateTimeReplied: dateTimeReplied,
-      publisher: publisherModel.toEntity(),
-      user: userModel.toEntity(),
+      // publisher: publisherModel.toEntity(),
+      // user: userModel.toEntity(),
+      user: user,
+      publisher: publisher,
     );
     return reply;
   }
+
+  @override
+  List<Object?> get props => [reply, dateTimeReplied, publisher, user];
 }
 
 class InterestModel extends Interest {

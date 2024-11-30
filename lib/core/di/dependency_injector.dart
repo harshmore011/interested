@@ -1,11 +1,20 @@
-import 'dart:convert';
 
 import 'package:get_it/get_it.dart';
-import 'package:interested/features/authentication/domain/entities/user_entity.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:logger/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../features/article/article_interaction/data/datasources/article_interaction_datasource.dart';
+import '../../features/article/article_interaction/data/repositories/article_interaction_repository_impl.dart';
+import '../../features/article/article_interaction/domain/repositories/article_interaction_repository.dart';
+import '../../features/article/article_interaction/domain/usecases/add_reply_to_comment_usecase.dart';
+import '../../features/article/article_interaction/domain/usecases/comment_on_article_usecase.dart';
+import '../../features/article/article_interaction/domain/usecases/get_home_article_page_usecase.dart';
+import '../../features/article/article_interaction/domain/usecases/view_article_usecase.dart';
+import '../../features/article/article_interaction/domain/usecases/like_article_usecase.dart';
+import '../../features/article/article_interaction/domain/usecases/save_article_usecase.dart';
+import '../../features/article/article_interaction/domain/usecases/unlike_article_usecase.dart';
+import '../../features/article/article_interaction/domain/usecases/unsave_article_usecase.dart';
+import '../../features/article/article_interaction/presentation/blocs/article_interaction_bloc.dart';
 import '../../features/article/article_management/domain/usecases/get_draft_articles_usecase.dart';
 import '../../features/article/article_management/domain/usecases/get_published_articles_usecase.dart';
 import '../../features/article/article_management/domain/usecases/get_scheduled_articles_usecase.dart';
@@ -20,13 +29,10 @@ import '../../features/article/article_management/data/repositories/article_mana
 import '../../features/article/article_management/domain/repositories/article_management_repository.dart';
 import '../../features/article/article_management/presentation/blocs/article_management_bloc.dart';
 import '../../features/authentication/data/datasources/authentication_datasource.dart';
-import '../../features/authentication/data/models/publisher_model.dart';
 import '../../features/authentication/data/repositories/authentication_repository_impl.dart';
-import '../../features/authentication/domain/entities/publisher_entity.dart';
 import '../../features/authentication/domain/repositories/authentication_repository.dart';
 import '../../features/authentication/domain/usecases/anonymous_sign_in_usecase.dart';
 import '../../features/authentication/domain/usecases/anonymous_to_user_usecase.dart';
-import '../../features/authentication/domain/usecases/forgot_password_usecase.dart';
 import '../../features/authentication/domain/usecases/publisher_sign_in_usecase.dart';
 import '../../features/authentication/domain/usecases/publisher_sign_up_usecase.dart';
 import '../../features/authentication/domain/usecases/sign_out_Usecasse.dart';
@@ -52,7 +58,7 @@ Future<void> injectDependencies() async {
   sl.registerLazySingleton<Logger>(() => Logger(level: Level.debug));
 
   /// Core
-  await SharedPrefHelper.initUserIfExists();
+  await SharedPrefHelper.reloadCurrentUser();
 
   // Theme
   sl.registerLazySingleton<AppTheme>(() => AppTheme());
@@ -129,5 +135,30 @@ Future<void> injectDependencies() async {
   sl.registerLazySingleton<ArticleManagementDataSource>(() => ArticleManagementDataSourceImpl());
 
 
+  /// ARTICLE INTERACTION
+  // Bloc
+  sl.registerFactory(() => ArticleInteractionBloc(likeArticleUseCase: sl(),
+  viewArticleUseCase: sl(),
+  unlikeArticleUseCase: sl(),
+  commentOnArticleUseCase: sl(),
+  addReplyToCommentUseCase: sl(),
+  saveArticleUseCase: sl(),
+  unsaveArticleUseCase: sl(),
+  getArticlesUseCase: sl()));
+
+  // UseCases
+  sl.registerLazySingleton(() => ViewArticleUseCase(sl()));
+  sl.registerLazySingleton(() => LikeArticleUseCase(sl()));
+  sl.registerLazySingleton(() => UnlikeArticleUseCase(sl()));
+  sl.registerLazySingleton(() => CommentOnArticleUseCase(sl()));
+  sl.registerLazySingleton(() => AddReplyToCommentUseCase(sl()));
+  sl.registerLazySingleton(() => SaveArticleUseCase(sl()));
+  sl.registerLazySingleton(() => UnSaveArticleUseCase(sl()));
+  sl.registerLazySingleton(() => GetHomeArticlePageUseCase(sl()));
+  // Repositories
+  sl.registerLazySingleton<ArticleInteractionRepository>(() => ArticleInteractionRepositoryImpl(networkInfo: sl()
+      , dataSource: sl()));
+  //Data Source
+  sl.registerLazySingleton<ArticleInteractionDataSource>(() => ArticleInteractionDataSourceImpl());
 
 }

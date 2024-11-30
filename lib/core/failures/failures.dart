@@ -16,6 +16,8 @@ class DataNotFoundFailure extends Failure {}
 
 class NoUserFailure extends Failure {}
 
+class UnAuthorizedFailure extends Failure {}
+
 class EmailAlreadyInUseFailure extends Failure {}
 
 class InvalidEmailFailure extends Failure {}

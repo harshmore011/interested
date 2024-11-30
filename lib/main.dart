@@ -8,6 +8,7 @@ import 'core/di/dependency_injector.dart';
 import 'core/routes/app_router.dart';
 import 'core/utils/debug_logger.dart';
 import 'core/utils/shared_pref_helper.dart';
+import 'features/article/article_interaction/presentation/blocs/article_interaction_bloc.dart';
 import 'features/article/article_management/presentation/blocs/article_management_bloc.dart';
 import 'features/authentication/presentation/blocs/authentication_bloc.dart';
 import 'features/onboarding/presentation/blocs/onboarding_bloc.dart';
@@ -55,6 +56,7 @@ Future<void> main() async {
           BlocProvider(create: (context) => sl<OnboardingBloc>()),
           BlocProvider(create: (context) => sl<AuthenticationBloc>()),
           BlocProvider(create: (context) => sl<ArticleManagementBloc>()),
+          BlocProvider(create: (context) => sl<ArticleInteractionBloc>()),
         ],
         child: MyApp(initialRoute: initialRoute,),
       ));

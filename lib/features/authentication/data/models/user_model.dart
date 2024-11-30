@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
+
 import '../../domain/entities/auth.dart';
 import '../../domain/entities/user_entity.dart';
 
@@ -57,13 +59,17 @@ class UserModel extends User {
   }*/
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
+
     UserModel userModel = UserModel(
       name: json['name'],
       email: json['email'],
       isEmailVerified: json['isEmailVerified'],
-      creationTime: DateTime.parse(json['creationTime'].toDate().toString()),
-      lastSignInTime:
-          DateTime.parse(json['lastSignInTime'].toDate().toString()),
+      // creationTime: DateTime.parse(json['creationTime']),
+      creationTime: DateTime.parse(json['creationTime'] is Timestamp ?
+          json['creationTime'].toDate().toString() : json['creationTime']),
+      // lastSignInTime: DateTime.parse(json['lastSignInTime']),
+      lastSignInTime: DateTime.parse(json['lastSignInTime']  is Timestamp ?
+          json['lastSignInTime'].toDate().toString()  : json['lastSignInTime']),
       authProvider: AuthenticationProvider.values.byName(json['authProvider']),
       refreshToken: json['refreshToken'],
       uid: json['uid'],
@@ -83,8 +89,10 @@ class UserModel extends User {
       "name": name,
       "email": email,
       "isEmailVerified": isEmailVerified,
-      "creationTime": creationTime,
-      "lastSignInTime": lastSignInTime,
+      // "creationTime": creationTime,
+      // "lastSignInTime": lastSignInTime,
+      "creationTime": creationTime.toString(),
+      "lastSignInTime": lastSignInTime.toString(),
       "authProvider": authProvider.name,
       "refreshToken": refreshToken,
       "uid": uid,

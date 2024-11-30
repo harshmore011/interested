@@ -117,11 +117,11 @@ class ArticleManagementBloc
 
   String _mapFailureToMessage(Failure failure) {
     switch (failure.runtimeType) {
-      case OfflineFailure:
+      case const (OfflineFailure):
         return Constant.OFFLINE_FAILURE_MESSAGE;
-      case ServerFailure:
+      case const (ServerFailure):
         return Constant.SERVER_FAILURE_MESSAGE;
-      case NoUserFailure:
+      case const (NoUserFailure):
         return Constant.NO_USER_FAILURE_MESSAGE;
       default:
         return Constant.SERVER_FAILURE_MESSAGE;

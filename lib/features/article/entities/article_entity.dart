@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 
 import '../../authentication/domain/entities/publisher_entity.dart';
-import '../../authentication/domain/entities/user_entity.dart';
 import '../article.dart';
 
 class Article extends Equatable {
@@ -72,37 +71,42 @@ class Article extends Equatable {
 }
 
 class Comment extends Equatable {
+  final String? id;
   final String comment;
-  final User user;
+  final String user;
+  // final User user;
   final bool isLikedByPublisher;
-  final List<Reply>? replies;
+  final List<Reply> replies = [];
   final DateTime dateTimeCommented;
 
-  const Comment({
+  Comment({
+    this.id,
     required this.comment,
     required this.user,
-    required this.replies,
+    // required this.replies,
     required this.isLikedByPublisher,
     required this.dateTimeCommented,
   });
 
   @override
   List<Object?> get props =>
-      [comment, user, isLikedByPublisher, replies, dateTimeCommented,];
+      [id, comment, user, isLikedByPublisher, replies, dateTimeCommented,];
 
 
 }
 
 class Reply extends Equatable {
   final String reply;
-  final User? user;
-  final Publisher? publisher;
+  final String? user;
+  // final User? user;
+  final String? publisher;
+  // final Publisher? publisher;
   final DateTime dateTimeReplied;
 
   const Reply({
     required this.reply,
-    required this.user,
-    required this.publisher,
+    this.user,
+     this.publisher,
     required this.dateTimeReplied,
   });
 

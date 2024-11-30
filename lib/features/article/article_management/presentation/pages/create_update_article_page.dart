@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../../core/utils/debug_logger.dart';
 import '../../../../../core/utils/snackbar_message.dart';
@@ -18,12 +19,15 @@ class CreateUpdateArticlePage extends StatefulWidget {
 }
 
 class _CreateUpdateArticlePageState extends State<CreateUpdateArticlePage> {
+
   Article? article;
+  XFile? _image;
 
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _labelsController = TextEditingController();
   final _descriptionController = TextEditingController();
+
 
   @override
   void initState() {
@@ -36,7 +40,14 @@ class _CreateUpdateArticlePageState extends State<CreateUpdateArticlePage> {
 
     if(_titleController.text.isEmpty) {
       _titleController.text = article?.title ?? 'A dummy title';
-      _labelsController.text = article?.labels.first ?? 'dummy label';
+      String? articleLabels;
+      if (article != null) {
+        articleLabels = article!.labels
+            .map<String>((e) => e)
+            .toList()
+            .join(",");
+      }
+      _labelsController.text = articleLabels ?? 'dummy label';
       _descriptionController.text = article?.description ??
           'dummy description which ideally should be too long'
               "nearly about 2000 characters but anyway that's fine";
@@ -77,11 +88,21 @@ class _CreateUpdateArticlePageState extends State<CreateUpdateArticlePage> {
                           );
                           params.labels
                               .addAll(_labelsController.text.split(","));
-
+                          if (_image != null) {
+                            params.images.add(_image!);
+                          }
                           logger.log(
                               "CreateUpdateArticlePage:build: BlocBuilder():saveAsDraft: labels",
                               "${_labelsController.text.split(",")}");
                           if (article != null) {
+                            if (_image != null) {
+                            for (var imgUrl in article.images) {
+                              if (!imgUrl.contains(_image!.name)) {
+                                params.imageDeleteList.add(imgUrl);
+                                // _deleteImageList.add(imgUrl);
+                              }
+                            }
+                            }
                             context
                                 .read<ArticleManagementBloc>()
                                 .add(UpdateArticleEvent(params: params));
@@ -152,12 +173,12 @@ class _CreateUpdateArticlePageState extends State<CreateUpdateArticlePage> {
                     children: [
                       Row(
                         children: [
-                          Text(
+                          const Text(
                             "Title",
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 18),
                           ),
-                          SizedBox(
+                          const  SizedBox(
                             width: 40,
                           ),
                           Flexible(
@@ -168,7 +189,7 @@ class _CreateUpdateArticlePageState extends State<CreateUpdateArticlePage> {
                               // controller: _titleController..text = article?.title ?? 'A dummy title',
                               minLines: 2,
                               maxLines: 2,
-                              style: TextStyle(
+                              style: const TextStyle(
                                   fontSize: 18, ),
                               decoration: const InputDecoration(
                                 // labelText: 'Title',
@@ -184,17 +205,17 @@ class _CreateUpdateArticlePageState extends State<CreateUpdateArticlePage> {
                           ),
                         ],
                       ),
-                      SizedBox(
+                      const  SizedBox(
                         height: 20,
                       ),
                       Row(
                         children: [
-                          Text(
+                          const  Text(
                             "Labels",
                             style: TextStyle(
                                 fontWeight: FontWeight.bold, fontSize: 18),
                           ),
-                          SizedBox(
+                          const  SizedBox(
                             width: 20,
                           ),
                           ConstrainedBox(
@@ -214,15 +235,76 @@ class _CreateUpdateArticlePageState extends State<CreateUpdateArticlePage> {
                               ),
                             ),
                           ),
+                          const SizedBox(width: 20,),
+                          const Text("Tools", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),),
+                          const SizedBox(width: 20,),
+                           IconButton(onPressed: () async
+                           // => await _pickImage(),
+                             {
+                             if (_image == null) {
+                               final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+                               if(image != null) {
+                                 logger.log(
+                                     "CreateUpdateArticlePage:build: _pickImage()",
+                                     "image: ${image.name}");
+                                 setState(() {
+                                   _image = image;
+                                 });
+                               } else {
+                                 logger.log(
+                                     "CreateUpdateArticlePage:build: _pickImage()",
+                                     "image: null");
+                               }
+
+                             }else {
+                               if (!context.mounted) return;
+                               logger.log("CreateUpdateArticlePage:build: _pickImage()",
+                                   "image: null");
+                               var imageBytes = await _image!.readAsBytes();
+                               if(!context.mounted) return;
+                               showDialog(context: context, builder:
+                               (context)  {
+
+                                 return Dialog(
+                                   elevation: 2,
+                                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                   child: Card(
+                                     child: Padding(
+                                       padding: const EdgeInsets.all(32.0),
+                                       child: Row(
+                                         mainAxisSize: MainAxisSize.min,
+                                         children: [
+                                           Image(image: MemoryImage(imageBytes),
+                                           width: 400,
+                                           height: 400,),
+                                           const SizedBox(width: 32,),
+                                           IconButton(onPressed: () {
+                                             setState(() {
+                                               _image = null;
+                                             });
+                                             Navigator.pop(context);
+                                           }, icon: Icon(Icons.delete, color: Colors.red),),
+                                         ],
+                                       ),
+                                     ),
+                                   ),
+                                 );
+                               });
+                             }
+                             },
+                             icon: Icon(Icons.image),),
+                          // const SizedBox(width: 20,),
+                          // if (_image != null) Text(_image!.name, style: TextStyle(color:
+                          // Colors.blue, fontSize: 18, fontStyle: FontStyle.italic),),
                         ],
                       ),
-                      SizedBox(
+                      const SizedBox(
                         height: 20,
                       ),
                       Row(
                         children: [
                           // Text("Description", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),),
-                          SizedBox(
+                          const  SizedBox(
                             width: 20,
                           ),
                           Expanded(
@@ -231,7 +313,7 @@ class _CreateUpdateArticlePageState extends State<CreateUpdateArticlePage> {
                             child: TextFormField(
                               minLines: 30,
                               maxLines: null,
-                              style: TextStyle(fontSize: 16),
+                              style: const TextStyle(fontSize: 16),
                               cursorOpacityAnimates: false,
                               controller: _descriptionController,
                               decoration: const InputDecoration(
@@ -250,4 +332,5 @@ class _CreateUpdateArticlePageState extends State<CreateUpdateArticlePage> {
       ),
     );
   }
+
 }

@@ -9,4 +9,5 @@ class TooManyRequestsException implements Exception {}
 class WrongPasswordException implements Exception {}
 class InvalidCredentialException implements Exception {}
 class MissingRequiredArgumentsException implements Exception {}
+class UnAuthorizedException implements Exception {}
 

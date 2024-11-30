@@ -27,7 +27,7 @@ class _BenefitCardState extends State<BenefitCard> {
         elevation: 4,
         child: Container(
           width: 275,
-          height: 400,
+          height: 440,
           // constraints: BoxConstraints(maxHeight: ),
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -39,16 +39,18 @@ class _BenefitCardState extends State<BenefitCard> {
               // benefit.supportingImage,
               Image.memory(benefit.supportingImage, width: 200, height: 200,),
               const SizedBox(height: 12,),
-              Text(benefit.description, softWrap: true,textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),),
+              Flexible(
+                child: Text(benefit.description, softWrap: true,textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),),
+              ),
               const SizedBox(height: 4,),
             ],
           ),
         ),
       ),
-    );;
+    );
   }
 }

@@ -1,7 +1,7 @@
 
+// ignore_for_file: unused_import
+
 import 'package:equatable/equatable.dart';
-import 'package:interested/features/onboarding/data/models/onboarding_model.dart';
-import 'package:interested/features/onboarding/domain/entities/onboarding_entity.dart';
 
 abstract class AuthenticationState extends Equatable {
   @override

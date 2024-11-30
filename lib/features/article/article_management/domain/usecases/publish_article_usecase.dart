@@ -1,4 +1,6 @@
 
+// ignore_for_file: unused_import
+
 import 'package:dartz/dartz.dart';
 
 import '../../../../../core/failures/failures.dart';

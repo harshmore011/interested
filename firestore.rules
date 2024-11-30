@@ -10,7 +10,7 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  	match /onboarding_data/getOnboardingData {
+  	match /onboarding/onboarding_data/{document=**} {
   		allow read: if true;
   		allow write: if false;
   }

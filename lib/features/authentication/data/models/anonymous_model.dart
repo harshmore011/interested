@@ -1,6 +1,6 @@
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../../core/utils/debug_logger.dart';
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
+
 import '../../domain/entities/anonymous_entity.dart';
 
 class AnonymousModel extends Anonymous {
@@ -19,8 +19,12 @@ class AnonymousModel extends Anonymous {
   factory AnonymousModel.fromJson(Map<String, dynamic> json) {
     return AnonymousModel(
       uid: json['uid'],
-      creationTime: DateTime.parse(json['creationTime'].toDate().toString()),
-      lastSignInTime: DateTime.parse(json['lastSignInTime'].toDate().toString()),
+      // creationTime: DateTime.parse(json['creationTime']),
+      creationTime: DateTime.parse(json['creationTime'] is Timestamp ?
+      json['creationTime'].toDate().toString() : json['creationTime']),
+      // lastSignInTime: DateTime.parse(json['lastSignInTime']),
+      lastSignInTime: DateTime.parse(json['lastSignInTime']  is Timestamp ?
+      json['lastSignInTime'].toDate().toString()  : json['lastSignInTime']),
       refreshToken: json['refreshToken'],
     );
   }
@@ -28,8 +32,10 @@ class AnonymousModel extends Anonymous {
   Map<String, dynamic> toJson() {
     return {
       "uid": uid,
-      "creationTime": creationTime,
-      "lastSignInTime": lastSignInTime,
+      // "creationTime": creationTime,
+      // "lastSignInTime": lastSignInTime,
+      "creationTime": creationTime.toString(),
+      "lastSignInTime": lastSignInTime.toString(),
       "refreshToken": refreshToken,
     };
   }

@@ -1,7 +1,6 @@
 
 import 'package:dartz/dartz.dart';
 import 'package:interested/core/failures/failures.dart';
-import 'package:interested/features/onboarding/domain/entities/onboarding_entity.dart';
 
 import '../../../../../core/success/success.dart';
 import '../../../article.dart';

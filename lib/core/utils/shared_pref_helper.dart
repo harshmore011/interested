@@ -42,8 +42,8 @@ class SharedPrefHelper {
     pref.clear();
   }
 
-  static initUserIfExists() async {
-    logger.log("SharedPrefHelper", "initUserIfExists()");
+  static reloadCurrentUser() async {
+    logger.log("SharedPrefHelper", "reloadCurrentUser()");
     SharedPreferencesWithCache pref = await SharedPreferencesWithCache.create(cacheOptions:
     SharedPreferencesWithCacheOptions(
       allowList: <String>{"anonymousModel","userModel","publisherModel"},
@@ -52,26 +52,38 @@ class SharedPrefHelper {
     String? json;
     if(pref.containsKey("anonymousModel")) {
       json = pref.getString("anonymousModel");
-      logger.log("SharedPrefHelper", "initUserIfExists(): Current anonymous user: $json");
-      sl.registerLazySingleton<Anonymous>(() => AnonymousModel.fromJson(jsonDecode(json!)));
+      logger.log("SharedPrefHelper", "reloadCurrentUser(): Current anonymous user: $json");
+      if(!sl.isRegistered<Anonymous>(instanceName: "currentUser")) {
+        sl.registerLazySingleton<Anonymous>(() => AnonymousModel.fromJson(jsonDecode(json!))
+      , instanceName: "currentUser");
+      }
+      // sl.registerSingleton<PersonRole>(PersonRole.anonymous, instanceName: "currentUser");
 
     } else if(pref.containsKey("userModel")) {
       json = pref.getString("userModel");
-      logger.log("SharedPrefHelper", "initUserIfExists(): Current user user: $json");
-      sl.registerLazySingleton<User>(() => UserModel.fromJson(jsonDecode(json!)));
+      logger.log("SharedPrefHelper", "reloadCurrentUser(): Current user user: $json");
+      if(!sl.isRegistered<User>(instanceName: "currentUser")) {
+        sl.registerLazySingleton<User>(() => UserModel.fromJson(jsonDecode(json!)),
+      instanceName: "currentUser");
+      }
+      // sl.registerSingleton<PersonRole>(PersonRole.user, instanceName: "currentUser");
 
     } else if(pref.containsKey("publisherModel")) {
       json = pref.getString("publisherModel");
-      logger.log("SharedPrefHelper", "initUserIfExists(): Current publisher user: $json");
-      sl.registerLazySingleton<Publisher>(() => PublisherModel.fromJson(jsonDecode(json!)));
+      logger.log("SharedPrefHelper", "reloadCurrentUser(): Current publisher user: $json");
+      if(!sl.isRegistered<Publisher>(instanceName: "currentUser")) {
+        sl.registerLazySingleton<Publisher>(() => PublisherModel.fromJson(jsonDecode(json!)),
+      instanceName: "currentUser");
+      }
+      // sl.registerSingleton<PersonRole>(PersonRole.publisher, instanceName: "currentUser");
     }
 
-    logger.log("SharedPrefHelper", "initUserIfExists(): Current user: $json");
+    logger.log("SharedPrefHelper", "reloadCurrentUser(): Current user: $json");
 
   }
 
 /*  static getCurrentUser() async {
-    logger.log("SharedPrefHelper", "initUserIfExists()");
+    logger.log("SharedPrefHelper", "reloadCurrentUser()");
     SharedPreferencesWithCache pref = await SharedPreferencesWithCache.create(cacheOptions:
     SharedPreferencesWithCacheOptions(
       allowList: <String>{"anonymousModel","userModel","publisherModel"},
@@ -80,21 +92,21 @@ class SharedPrefHelper {
     String? json;
     if(pref.containsKey("anonymousModel")) {
       json = pref.getString("anonymousModel");
-      logger.log("SharedPrefHelper", "initUserIfExists(): Current anonymous user: $json");
+      logger.log("SharedPrefHelper", "reloadCurrentUser(): Current anonymous user: $json");
       sl.registerLazySingleton<Anonymous>(() => AnonymousModel.fromJson(jsonDecode(json!)));
 
     } else if(pref.containsKey("userModel")) {
       json = pref.getString("userModel");
-      logger.log("SharedPrefHelper", "initUserIfExists(): Current user user: $json");
+      logger.log("SharedPrefHelper", "reloadCurrentUser(): Current user user: $json");
       sl.registerLazySingleton<User>(() => UserModel.fromJson(jsonDecode(json!)));
 
     } else if(pref.containsKey("publisherModel")) {
       json = pref.getString("publisherModel");
-      logger.log("SharedPrefHelper", "initUserIfExists(): Current publisher user: $json");
+      logger.log("SharedPrefHelper", "reloadCurrentUser(): Current publisher user: $json");
       sl.registerLazySingleton<Publisher>(() => PublisherModel.fromJson(jsonDecode(json!)));
     }
 
-    logger.log("SharedPrefHelper", "initUserIfExists(): Current user: $json");
+    logger.log("SharedPrefHelper", "reloadCurrentUser(): Current user: $json");
 
   }*/
 

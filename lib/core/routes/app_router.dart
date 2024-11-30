@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../features/article/article_interaction/presentation/pages/article_page.dart';
 import '../../features/article/article_management/presentation/pages/create_update_article_page.dart';
 import '../../features/article/article_management/presentation/pages/publisher_home_page.dart';
+import '../../features/article/entities/article_entity.dart';
 import '../../features/authentication/presentation/pages/authentication_page.dart';
-import '../../features/authentication/presentation/pages/home_page.dart';
+import '../../features/article/article_interaction/presentation/pages/home_page.dart';
 import '../../features/onboarding/presentation/pages/onboarding_page.dart';
 import '../di/dependency_injector.dart';
 import '../theme/app_theme.dart';
@@ -24,6 +26,11 @@ class AppRouter {
       case "/homePage":
         return MaterialPageRoute(
           builder: (_) => const HomePage(),
+        );
+      case "/articlePage":
+        return MaterialPageRoute(
+          builder: (_) => ArticlePage(article: settings.arguments as Article),
+          settings: settings,
         );
       case "/publisherHomePage":
         return MaterialPageRoute(

@@ -39,8 +39,8 @@ class _ArticleWidgetState extends State<ArticleWidget> {
             elevation: 4,
             child: InkWell(
               onTap: () {
-                Navigator.of(context).pushNamed("/createUpdateArticlePage",
-                    arguments: article);
+                Navigator.of(context)
+                    .pushNamed("/createUpdateArticlePage", arguments: article);
               },
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -101,15 +101,15 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                                     <PopupMenuEntry<String>>[
                                   PopupMenuItem<String>(
                                     value: 'ViewArticle',
-                                    child: Text('View Article'),
+                                    child: const Text('View Article'),
                                   ),
                                   PopupMenuItem<String>(
                                     value: 'Update',
-                                    child: Text('Update'),
+                                    child: const Text('Update'),
                                   ),
                                   PopupMenuItem<String>(
                                     value: 'Delete',
-                                    child: Text('Delete'),
+                                    child: const Text('Delete'),
                                   ),
                                 ];
 
@@ -117,20 +117,18 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                                         DraftArticlesFetchedState ||
                                     homePageState.runtimeType ==
                                         ScheduledArticlesFetchedState) {
-
                                   entries.add(PopupMenuItem<String>(
                                     value: 'Publish',
-                                    child: Text('Publish'),
+                                    child: const Text('Publish'),
                                   ));
                                 }
                                 if (homePageState.runtimeType ==
                                         DraftArticlesFetchedState ||
                                     homePageState.runtimeType ==
                                         ScheduledArticlesFetchedState) {
-
                                   entries.add(PopupMenuItem<String>(
                                     value: 'Schedule',
-                                    child: Text('Schedule'),
+                                    child: const Text('Schedule'),
                                   ));
                                 }
                                 if (homePageState.runtimeType ==
@@ -139,7 +137,7 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                                         ScheduledArticlesFetchedState) {
                                   entries.add(PopupMenuItem<String>(
                                     value: 'RevertToDraft',
-                                    child: Text('Revert to Draft'),
+                                    child: const Text('Revert to Draft'),
                                   ));
                                 }
                                 return entries;
@@ -176,6 +174,9 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                                   message: "Article deleted", context: context);
                               /* context.read<ArticleManagementBloc>().add(
                                     DeleteArticleEvent(id: id));*/
+                              context
+                                  .read<ArticleManagementBloc>()
+                                  .add(GetDraftArticlesEvent());
                             } else if (state is FailureState) {
                               SnackBarMessage.showSnackBar(
                                   message: state.message, context: context);
@@ -198,7 +199,7 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      SizedBox(
+                      const SizedBox(
                         height: 12,
                       ),
                       Row(
@@ -210,7 +211,8 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                             article.publisher.name,
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),*/
-                          Text(_setArticleDate(article),
+                          Text(
+                            _setArticleDate(article),
                           ),
                         ],
                       )
@@ -271,8 +273,8 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text('Schedule this Article for Publish',
-                      style: TextStyle(fontWeight: FontWeight.bold,
-                          fontSize: 20)),
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
                   const SizedBox(height: 16),
                   TextField(
                     controller: dateTimeController,
@@ -303,24 +305,26 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                             pickedTime.hour,
                             pickedTime.minute,
                           );
-                          dateTimeController.text = ScheduledDateTime.toString().split(".").first;
+                          dateTimeController.text =
+                              ScheduledDateTime.toString().split(".").first;
                         }
                       }
                     },
                   ),
                   const SizedBox(height: 20),
-
                   ElevatedButton(
                     style: ButtonStyle(
                       // textStyle: ,
-                      backgroundColor: WidgetStateProperty.all(AppTheme.colorPrimary),
+                      // backgroundColor: WidgetStateProperty.all(AppTheme.colorPrimary),
                       shape: WidgetStateProperty.all<RoundedRectangleBorder>(
                         RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(18.0),
                         ),
                       ),
                     ),
-                    child: const Text('Schedule', style: TextStyle(color: Colors.white),),
+                    child: const Text(
+                      'Schedule', /* style: TextStyle(color: Colors.white),*/
+                    ),
                     onPressed: () {
                       context
                           .read<ArticleManagementBloc>()
@@ -347,7 +351,8 @@ class _ArticleWidgetState extends State<ArticleWidget> {
       builder: (BuildContext context) {
         return AlertDialog(
             title: const Text('Revert to Draft?'),
-            content: const Text('This article will be unpublished and reverted back to draft'),
+            content: const Text(
+                'This article will be unpublished and reverted back to draft'),
             actions: <Widget>[
               TextButton(
                 child: const Text('Cancel'),
@@ -356,8 +361,13 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                 },
               ),
               TextButton(
-                  child: Container(color: AppTheme.colorPrimary,
-        child: const Text('Revert to draft', style: TextStyle(color: Colors.white),),),
+                  child: Container(
+                    color: Colors.white,
+                    child: const Text(
+                      'Revert to draft',
+                      // style: TextStyle(color: Colors.white),
+                    ),
+                  ),
                   onPressed: () {
                     context
                         .read<ArticleManagementBloc>()
@@ -384,8 +394,13 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                 },
               ),
               TextButton(
-                  child: Container(color: AppTheme.colorPrimary,
-                    child: const Text('Delete', style: TextStyle(color: Colors.white),),),
+                  child: Container(
+                    color: Colors.white,
+                    child: const Text(
+                      'Delete',
+                      // style: TextStyle(color: Colors.white),
+                    ),
+                  ),
                   onPressed: () {
                     context
                         .read<ArticleManagementBloc>()
@@ -409,6 +424,4 @@ class _ArticleWidgetState extends State<ArticleWidget> {
       // return "Deleted on ${article.dateTimeDeleted.toString().split(' ')[0]}";
     }
   }
-
-
 }

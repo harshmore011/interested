@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart' show Timestamp;
+
 import '../../domain/entities/auth.dart';
 import '../../domain/entities/publisher_entity.dart';
 
@@ -50,8 +52,12 @@ class PublisherModel extends Publisher {
       isEmailVerified: json['isEmailVerified'],
       about: json['about'],
       followersCount: json['followersCount'],
-      creationTime: DateTime.parse(json['creationTime'].toDate().toString()),
-      lastSignInTime: DateTime.parse(json['lastSignInTime'].toDate().toString()),
+      // creationTime: DateTime.parse(json['creationTime']),
+      creationTime: DateTime.parse(json['creationTime'] is Timestamp ?
+      json['creationTime'].toDate().toString() : json['creationTime']),
+      // lastSignInTime: DateTime.parse(json['lastSignInTime']),
+      lastSignInTime: DateTime.parse(json['lastSignInTime']  is Timestamp ?
+      json['lastSignInTime'].toDate().toString()  : json['lastSignInTime']),
       authProvider: AuthenticationProvider.values.byName(json['authProvider']),
       refreshToken: json['refreshToken'],
       uid: json['uid'],
@@ -71,10 +77,10 @@ class PublisherModel extends Publisher {
       "isEmailVerified": isEmailVerified,
       "about": about,
       "followersCount": followersCount,
-      "creationTime": creationTime,
-      // "creationTime": creationTime.toIso8601String(),
-      "lastSignInTime": lastSignInTime,
-      // "lastSignInTime": lastSignInTime.toIso8601String(),
+      // "creationTime": creationTime,
+      "creationTime": creationTime.toString(),
+      // "lastSignInTime": lastSignInTime,
+      "lastSignInTime": lastSignInTime.toString(),
       "authProvider": authProvider.name,
       "refreshToken": refreshToken,
       "uid": uid,

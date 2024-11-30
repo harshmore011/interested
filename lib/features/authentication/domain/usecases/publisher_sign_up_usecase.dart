@@ -3,7 +3,6 @@ import '../../../../core/failures/failures.dart';
 import '../../../../core/usecase/usecase.dart';
 import '../entities/auth.dart';
 import '../entities/publisher_entity.dart';
-import '../entities/user_entity.dart';
 import '../repositories/authentication_repository.dart';
 
 class PublisherSignUpUseCase extends Usecase<Publisher, AuthParams> {

@@ -1,8 +1,13 @@
+import 'dart:typed_data';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../../core/di/dependency_injector.dart';
 import '../../../../../core/failures/exceptions.dart';
 import '../../../../../core/utils/debug_logger.dart';
+import '../../../../../core/utils/shared_pref_helper.dart';
 import '../../../../authentication/data/models/publisher_model.dart';
 import '../../../../authentication/domain/entities/publisher_entity.dart';
 import '../../../article.dart';
@@ -36,10 +41,16 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
         params.toString());
     // DraftArticleParams? draftArticleParams = params.draftArticleParams;
 
+    if(!sl.isRegistered<Publisher>(instanceName: "currentUser")){
+      await SharedPrefHelper.reloadCurrentUser();
+    }
+
+    Publisher publisher = sl.get<Publisher>(instanceName: "currentUser");
+
     // if (draftArticleParams != null) {
     if (params.title != null /*&& params.description != null*/) {
-
-      PublisherModel articlePublisher = PublisherModel.fromEntity(sl<Publisher>());
+      PublisherModel articlePublisher =
+          PublisherModel.fromEntity(publisher);
       // PublisherModel articlePublisher = publisher.copyWith();
 
       ArticleModel article = ArticleModel(
@@ -56,43 +67,44 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
         saves: 0,
       );
       article.labels.addAll(params.labels);
-      // article.images.addAll(draftArticleParams.images);
+      // article.images.addAll(params.images);
 
-      await _storeArticleToFirestore(article);
+      String articleId = await _storeArticleToFirestore(article);
+      await _storeArticleImagesToFirebaseStorage(articleId, article, params.images);
       await _storeLabelsToFirestore(article.labels);
-      // _storeArticleImagesToFirebaseStorage(article, draftArticleParams.images);
     } else {
       throw MissingRequiredArgumentsException();
     }
   }
 
   Future<void> _storeLabelsToFirestore(List<String> labels) async {
-    logger.log("ArticleManagementDataSource:_storeLabelsToFirestore()",
-        "Started");
+    logger.log(
+        "ArticleManagementDataSource:_storeLabelsToFirestore()", "Started");
     for (var label in labels) {
-
-     await FirebaseFirestore.instance
+      await FirebaseFirestore.instance
           .collection("interests")
-      .where("label", isEqualTo: label).get().then((existingSameLabels) async {
+          .where("label", isEqualTo: label)
+          .get()
+          .then((existingSameLabels) async {
         logger.log("ArticleManagementDataSource:_storeLabelsToFirestore()",
             "existingSameLabels: $existingSameLabels");
 
         if (existingSameLabels.size == 0) {
-          InterestModel interest = InterestModel(label: label,totalLikes: 0, totalDislikes: 0,totalClicks: 0);
+          InterestModel interest = InterestModel(
+              label: label, totalLikes: 0, totalDislikes: 0, totalClicks: 0);
           logger.log("ArticleManagementDataSource:_storeLabelsToFirestore()",
               "Storing new Interest: $interest");
 
-         await FirebaseFirestore.instance
+          await FirebaseFirestore.instance
               .collection("interests")
               .doc(label)
               .set(interest.toJson());
         }
       });
-
     }
   }
 
-  Future<void> _storeArticleToFirestore(ArticleModel article) async {
+  Future<String> _storeArticleToFirestore(ArticleModel article) async {
     logger.log(
         "ArticleManagementDataSource:_storeArticleToFirestore()", "Started");
     try {
@@ -101,30 +113,22 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
       CollectionReference articles = firestore.collection("articles");
       DocumentReference newArticle = await articles.add(article.toJson());
       await newArticle.update({"id": newArticle.id});
-      logger.log("ArticleManagementDataSource", "New article created: $article");
+      logger.log(
+          "ArticleManagementDataSource", "New article created: $article");
+
+      return newArticle.id;
     } catch (e) {
       logger.log("ArticleManagementDataSource", e.toString());
       throw ServerException();
     }
   }
 
-  Future<void> _storeArticleImagesToFirebaseStorage(
-      ArticleModel article, images) async {
-    logger.log(
-        "ArticleManagementDataSource:_storeArticleImagesToFirebaseStorage()",
-        "Started");
-    /* for (int i = 0; i < article.images.length; i++) {
-      Uint8List imageBytes = article.images[i].bytes;
-      String imageName = article.images[i].name;
-      Reference imageRef = FirebaseStorage.instance.ref("articles/$newArticle.id/$imageName");
-      await imageRef.putData(imageBytes);
-  }*/
-  }
-
   @override
   Future<void> schedulePublishArticle(ArticleParams params) async {
-    logger.log("ArticleManagementDataSource:schedulePublishArticle()", "Started");
-    logger.log("ArticleManagementDataSource:schedulePublishArticle() ArticleParams",
+    logger.log(
+        "ArticleManagementDataSource:schedulePublishArticle()", "Started");
+    logger.log(
+        "ArticleManagementDataSource:schedulePublishArticle() ArticleParams",
         params.toString());
 
     // DraftArticleParams? draftArticleParams = params.draftArticleParams;
@@ -143,6 +147,75 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
       }
     } else {
       throw MissingRequiredArgumentsException();
+    }
+  }
+
+  Future<void> _storeArticleImagesToFirebaseStorage(String articleId,
+      ArticleModel article, List<XFile> images) async {
+    logger.log(
+        "ArticleManagementDataSource:_storeArticleImagesToFirebaseStorage()",
+        "Started");
+    for (int i = 0; i < images.length; i++) {
+      Uint8List imageBytes = await images[i].readAsBytes();
+      String imageName = images[i].name;
+
+      Reference imageRef =
+          FirebaseStorage.instance.ref("articles/$articleId/$imageName");
+
+      // var image = await imageRef.getData();
+      // imageRef.getData()
+      await imageRef.putData(imageBytes).then((snapshot) async {
+        logger.log(
+            "ArticleManagementDataSource:_storeArticleImagesToFirebaseStorage()",
+            "snapshot: $snapshot");
+        String url = await snapshot.ref.getDownloadURL();
+        logger.log(
+            "ArticleManagementDataSource:_storeArticleImagesToFirebaseStorage()",
+            "url: $url");
+        article.images.add(url);
+      });
+    }
+  }
+  Future<void> _updateOrDeleteArticleImagesToFirebaseStorage(
+      ArticleParams params) async {
+    logger.log("ArticleManagementDataSource:_updateOrDeleteArticleImagesToFirebaseStorage()",
+        "Started");
+    var articleDocRef = FirebaseFirestore.instance
+    .collection("articles").doc(params.id);
+    var storage = FirebaseStorage.instance;
+
+    // Delete old images
+    for(int i = 0; i < params.imageDeleteList.length; i++){
+      storage.refFromURL(params.imageDeleteList[i]).delete();
+
+      await articleDocRef.update({
+        "images": FieldValue.arrayRemove([params.imageDeleteList[i]])
+      });
+    }
+
+
+    for (int i = 0; i < params.images.length; i++) {
+      Uint8List imageBytes = await params.images[i].readAsBytes();
+      String imageName = params.images[i].name;
+
+      Reference imageRef = storage.ref("articles/${params.id}/$imageName");
+
+      // var image = await imageRef.getData();
+      // imageRef.getData()
+      await imageRef.putData(imageBytes).then((snapshot) async {
+        logger.log(
+            "ArticleManagementDataSource:_storeArticleImagesToFirebaseStorage()",
+            "snapshot: $snapshot");
+        String url = await snapshot.ref.getDownloadURL();
+        logger.log(
+            "ArticleManagementDataSource:_storeArticleImagesToFirebaseStorage()",
+            "url: $url");
+
+        // article.images.add(url);
+        await articleDocRef.update({
+          "images": FieldValue.arrayUnion([url])
+        });
+      });
     }
   }
 
@@ -193,7 +266,8 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
   @override
   Future<void> updateArticle(ArticleParams params) async {
     logger.log("ArticleManagementDataSource:updateArticle()", "Started");
-    logger.log("ArticleManagementDataSource:updateArticle() ArticleParams", params.toString());
+    logger.log("ArticleManagementDataSource:updateArticle() ArticleParams",
+        params.toString());
     // UpdateArticleParams? updateArticleParams = params.updateArticleParams;
 
     // if (updateArticleParams != null) {
@@ -205,9 +279,10 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
         "description": params.description,
         "currentState": ArticleState.updated.name,
         "labels": params.labels,
+        // "images": params.images,
         "dateTimeModified": DateTime.now(),
       });
-      // _storeArticleImagesToFirebaseStorage(article, images);
+      _updateOrDeleteArticleImagesToFirebaseStorage(params);
     } catch (e) {
       logger.log("ArticleManagementDataSource:updateArticle()", e.toString());
       throw ServerException();
@@ -220,14 +295,15 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
   @override
   Future<void> deleteArticle(String id) async {
     logger.log("ArticleManagementDataSource:deleteArticle()", "Started");
-    logger.log("ArticleManagementDataSource:deleteArticle() ArticleId", id.toString());
+    logger.log(
+        "ArticleManagementDataSource:deleteArticle() ArticleId", id.toString());
     // DeleteArticleParams? deleteArticleParams = params.deleteArticleParams;
 
     // if (deleteArticleParams != null) {
     try {
       FirebaseFirestore firestore = FirebaseFirestore.instance;
       await firestore.collection("articles").doc(id).update({
-        "currentState": ArticleState.markedForDeletion.name,
+        "currentState": ArticleState.deleted.name,
         "dateTimeDeleted": DateTime.now(),
       });
     } catch (e) {
@@ -243,12 +319,17 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
   Future<List<ArticleModel>> getDraftArticles() async {
     logger.log("ArticleManagementDataSource:getDraftArticles()", "Started");
 
-    PublisherModel publisher = PublisherModel.fromEntity(sl<Publisher>());
+    if(!sl.isRegistered<Publisher>(instanceName: "currentUser")){
+      await SharedPrefHelper.reloadCurrentUser();
+    }
+
+    Publisher publisher = sl.get<Publisher>(instanceName: "currentUser");
 
     List<ArticleModel> articles = await FirebaseFirestore.instance
         .collection("articles")
-        .where("publisher.email",isEqualTo: publisher.email)
+        .where("publisher.email", isEqualTo: publisher.email)
         .where("currentPublishState", isEqualTo: ArticlePublishState.draft.name)
+        .where("currentState", isNotEqualTo: ArticleState.deleted.name)
         .get()
         .then((snapshot) => snapshot.docs
             .map((doc) => ArticleModel.fromJson(doc.data()))
@@ -261,10 +342,18 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
   Future<List<ArticleModel>> getPublishedArticles() async {
     logger.log("ArticleManagementDataSource:getPublishedArticles()", "Started");
 
+    if(!sl.isRegistered<Publisher>(instanceName: "currentUser")){
+      await SharedPrefHelper.reloadCurrentUser();
+    }
+
+    Publisher publisher = sl.get<Publisher>(instanceName: "currentUser");
+
     List<ArticleModel> articles = await FirebaseFirestore.instance
         .collection("articles")
-        .where("publisher.email", isEqualTo: sl<Publisher>().email)
-        .where("currentPublishState", isEqualTo: ArticlePublishState.published.name)
+        .where("publisher.email", isEqualTo: publisher.email)
+        .where("currentPublishState",
+            isEqualTo: ArticlePublishState.published.name)
+        .where("currentState", isNotEqualTo: ArticleState.deleted.name)
         .get()
         .then((snapshot) => snapshot.docs
             .map((doc) => ArticleModel.fromJson(doc.data()))
@@ -277,10 +366,18 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
   Future<List<ArticleModel>> getScheduledArticles() async {
     logger.log("ArticleManagementDataSource:getScheduledArticles()", "Started");
 
+    if(!sl.isRegistered<Publisher>(instanceName: "currentUser")){
+      await SharedPrefHelper.reloadCurrentUser();
+    }
+
+    Publisher publisher = sl.get<Publisher>(instanceName: "currentUser");
+
     List<ArticleModel> articles = await FirebaseFirestore.instance
         .collection("articles")
-        .where("publisher.email", isEqualTo: sl<Publisher>().email)
-        .where("currentPublishState", isEqualTo: ArticlePublishState.scheduled.name)
+        .where("publisher.email", isEqualTo: publisher.email)
+        .where("currentPublishState",
+            isEqualTo: ArticlePublishState.scheduled.name)
+        .where("currentState", isNotEqualTo: ArticleState.deleted.name)
         .get()
         .then((snapshot) => snapshot.docs
             .map((doc) => ArticleModel.fromJson(doc.data()))
@@ -288,5 +385,4 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
 
     return articles;
   }
-
 }
