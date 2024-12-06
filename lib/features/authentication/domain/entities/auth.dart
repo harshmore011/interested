@@ -5,6 +5,12 @@ enum AuthenticationProvider {
   google
 }
 
+enum AuthSuccessNavigation {
+  none,
+  home,
+  stay
+}
+
 enum PersonRole {
   admin,
   anonymous,

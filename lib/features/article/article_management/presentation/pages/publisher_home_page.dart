@@ -90,13 +90,15 @@ class _PublisherHomePageState extends State<PublisherHomePage> {
                   Column(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      BlocBuilder<ArticleManagementBloc,
+                      BlocListener<ArticleManagementBloc,
                           ArticleManagementState>(
-                          builder: (context, state) {
+                          child:
+                           /*   (context, state) {
                         logger.log("PublisherHomePage: build: BlocBuilder",
                             "current state: ${state.runtimeType}");
-
-                        return Column(children: [
+*/
+                        // return
+                          Column(children: [
                           ListTile(
                             // tileColor: AppTheme.tertiaryColor,
                             // selectedTileColor: ,
@@ -136,17 +138,30 @@ class _PublisherHomePageState extends State<PublisherHomePage> {
                                   .add(GetScheduledArticlesEvent());
                             },
                           )
-                        ]);
-                      }
+                        ]),
+    listener: (_, state) {
+                       /* logger.log("PublisherHomePage: LISTENER",
+                            "current state: ${state.runtimeType}");
+                        if (state is DraftArticlesState) {
+                          setState(() {
+                            _selectedTileIndex = 0;
+                          });
+                        }*/
+                      },
+                        listenWhen:  (_, state) {
+                          return false;
+                        }
                       ),
                     ],
                   ),
-                  BlocConsumer<AuthenticationBloc, AuthenticationState>(
-                    builder: (_, state) {
+                  BlocListener<AuthenticationBloc, AuthenticationState>(
+                    child:
+                     /*   (_, state) {
                       logger.log("PublisherHomePage: build: consumer",
-                          "current state: ${state.runtimeType}");
+                          "current state: ${state.runtimeType}");*/
 
-                      return Column(
+                      // return
+                      Column(
                         children: [
                           const Divider(),
                           ListTile(
@@ -158,8 +173,8 @@ class _PublisherHomePageState extends State<PublisherHomePage> {
                             },
                           ),
                         ],
-                      );
-                    },
+                      ),
+                    // },
                     listener: (_, state) async {
                       logger.log("PublisherHomePage: LISTENER",
                           "current state: ${state.runtimeType}");
@@ -308,6 +323,7 @@ class _PublisherHomePageState extends State<PublisherHomePage> {
               },
               listener: (BuildContext context, ArticleManagementState state) {},
               listenWhen: (previous, current) {
+                // return false;
                 return current is DraftArticlesFetchedState ||
                     current is PublishedArticlesFetchedState ||
                     current is ScheduledArticlesFetchedState ||

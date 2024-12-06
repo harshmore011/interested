@@ -59,6 +59,7 @@ class DefaultFirebaseOptions {
     projectId: 'interested-project-011',
     authDomain: 'interested-project-011.firebaseapp.com',
     storageBucket: 'interested-project-011.appspot.com',
+    // measurementId: 'G-YCBP8GDSG9',
   );
 
 }

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/datetime_helper.dart';
 import '../../../../../core/utils/debug_logger.dart';
 import '../../../../../core/utils/snackbar_message.dart';
@@ -151,45 +150,49 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                                   message: "The article is published",
                                   context: context);
 
-                              context
-                                  .read<ArticleManagementBloc>()
-                                  .add(GetPublishedArticlesEvent());
-                            } else if (state is ArticleScheduledState) {
-                              SnackBarMessage.showSnackBar(
-                                  message:
-                                      "Article will be published on ${article.dateTimeScheduled}",
-                                  context: context);
-                              context
-                                  .read<ArticleManagementBloc>()
-                                  .add(GetScheduledArticlesEvent());
-                            } else if (state is ArticleUnpublishedState) {
-                              SnackBarMessage.showSnackBar(
-                                  message: "Article moved to draft",
-                                  context: context);
-                              context
-                                  .read<ArticleManagementBloc>()
-                                  .add(GetDraftArticlesEvent());
-                            } else if (state is ArticleMarkedForDeletionState) {
-                              SnackBarMessage.showSnackBar(
-                                  message: "Article deleted", context: context);
-                              /* context.read<ArticleManagementBloc>().add(
+                                  context
+                                      .read<ArticleManagementBloc>()
+                                      .add(GetPublishedArticlesEvent());
+                                } else if (state is ArticleScheduledState) {
+                                  SnackBarMessage.showSnackBar(
+                                      message:
+                                          "Article will be published on ${article.dateTimeScheduled}",
+                                      context: context);
+                                  context
+                                      .read<ArticleManagementBloc>()
+                                      .add(GetScheduledArticlesEvent());
+                                } else if (state is ArticleUnpublishedState) {
+                                  SnackBarMessage.showSnackBar(
+                                      message: "Article moved to draft",
+                                      context: context);
+                                  context
+                                      .read<ArticleManagementBloc>()
+                                      .add(GetDraftArticlesEvent());
+                                } else if (state
+                                    is ArticleMarkedForDeletionState) {
+                                  SnackBarMessage.showSnackBar(
+                                      message: "Article deleted",
+                                      context: context);
+                                  /* context.read<ArticleManagementBloc>().add(
                                     DeleteArticleEvent(id: id));*/
-                              context
-                                  .read<ArticleManagementBloc>()
-                                  .add(GetDraftArticlesEvent());
-                            } else if (state is FailureState) {
-                              SnackBarMessage.showSnackBar(
-                                  message: state.message, context: context);
-                            }
-                          },
+                                  context
+                                      .read<ArticleManagementBloc>()
+                                      .add(GetDraftArticlesEvent());
+                                } else if (state is FailureState) {
+                                  SnackBarMessage.showSnackBar(
+                                      message: state.message, context: context);
+                                }
+                              },
                               // child: const Icon(Icons.more_vert),
                               listenWhen: (previous, current) {
-                            return current is ArticlePublishedState ||
-                                current is ArticleScheduledState ||
-                                current is ArticleUnpublishedState ||
-                                current is ArticleMarkedForDeletionState ||
-                                current is FailureState;
-                          }),
+                                return true;
+
+                              /*  return current is ArticlePublishedState ||
+                                    current is ArticleScheduledState ||
+                                    current is ArticleUnpublishedState ||
+                                    current is ArticleMarkedForDeletionState ||
+                                    current is FailureState;*/
+                              }),
                         ],
                       ),
                       Text(

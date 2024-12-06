@@ -15,7 +15,10 @@ import '../widgets/sign_in_card.dart';
 import '../widgets/sign_up_card.dart';
 
 class AuthenticationPage extends StatefulWidget {
-  const AuthenticationPage({super.key});
+
+  final AuthSuccessNavigation? navigateTo;
+
+  const AuthenticationPage({super.key, this.navigateTo});
 
   @override
   State<AuthenticationPage> createState() => _AuthenticationPageState();
@@ -132,9 +135,11 @@ class _AuthenticationPageState extends State<AuthenticationPage>
                       if (_personRole != null &&
                           _personRole == PersonRole.anonymous) {
                         if (state is SignUpPageState) {
-                          return SignUpCard(personRole: PersonRole.anonymous);
+                          return SignUpCard(personRole: PersonRole.anonymous,
+                              navigateTo: widget.navigateTo);
                         } else if (state is SignInPageState) {
-                          return SignInCard(personRole: PersonRole.user);
+                          return SignInCard(personRole: PersonRole.user,
+                              navigateTo: widget.navigateTo);
                         }
                       }
                       // PersonRole _personRole;

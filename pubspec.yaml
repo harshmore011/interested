@@ -1,5 +1,5 @@
 name: interested
-description: "A new Flutter project."
+description: "A platform for exploring, creating and sharing interesting content."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -46,6 +46,7 @@ dependencies:
   cloud_firestore: ^5.4.4
   firebase_auth: ^5.3.1
   firebase_storage: ^12.3.3
+#  firebase_analytics: ^11.3.5
 
 dev_dependencies:
   flutter_test:

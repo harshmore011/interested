@@ -4,9 +4,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dartz/dartz.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
+import '../../../../core/di/dependency_injector.dart';
 import '../../../../core/failures/exceptions.dart';
 import '../../../../core/utils/debug_logger.dart';
 import '../../../../core/utils/shared_pref_helper.dart';
+import '../../domain/entities/anonymous_entity.dart';
 import '../../domain/entities/auth.dart';
 import '../models/anonymous_model.dart';
 import '../models/publisher_model.dart';
@@ -45,7 +47,7 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
     final db = FirebaseFirestore.instance;
 
 
-    if (anonymous != null) {
+    if (anonymous != null && user == null) {
       await db
           .collection("anonymous")
           .doc(anonymous.uid)
@@ -57,6 +59,10 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
       final userDoc = await userDocRef.get();
       if (!userDoc.exists) {
         await userDocRef.set(user.toJson());
+        if (anonymous != null) {
+          await linkAnonymousModelDataToUser(anonymous, userDocRef);
+        }
+
       }
       _checkAndAddNewPersonRole(db, user.email, PersonRole.user);
     }
@@ -159,25 +165,34 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
     logger.log("AuthenticationDataSource:anonymousToUser()", "Params: $params");
     try {
       var user = FirebaseAuth.instance.currentUser;
+
+      logger.log("AuthenticationDataSource:anonymousToUser()",
+          "anonymous user before linking: $user");
+
       // Using credential to LINK anonymous user a/c to user a/c
-      final AuthCredential credential;
+      final UserCredential userCredential;
       if (user != null) {
         if (params.authProvider == AuthenticationProvider.emailPassword) {
-          credential = EmailAuthProvider.credential(
+          final AuthCredential credential = EmailAuthProvider.credential(
               email: params.credential!.email,
               password: params.credential!.password);
+
+          userCredential = await user.linkWithCredential(credential);
+
         } else if (params.authProvider == AuthenticationProvider.google) {
-          String? idToken;
+
+          userCredential = await _signInWithGoogle();
+
+         /* String? idToken;
           user.reload();
           idToken = await user.getIdToken();
-          credential = GoogleAuthProvider.credential(idToken: idToken);
+          credential = GoogleAuthProvider.credential(idToken: idToken);*/
         } else {
           logger.log("AuthenticationDataSource",
               "Unknown auth provider. $params.authProvider");
           throw ServerException();
         }
 
-        final userCredential = await user.linkWithCredential(credential);
         logger.log("AuthenticationDataSource",
             "Anonymous user linked to user: $userCredential");
 
@@ -198,9 +213,24 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
 
         // sl.registerLazySingleton<User>(() => userModel);
 
+        AnonymousModel? anonymousModel;
+        if(sl.isRegistered<Anonymous>(instanceName: "currentUser")) {
+          logger.log("AuthenticationDataSource:anonymousToUser()", "Unregistering anonymous user");
+          Anonymous anonymous = sl<Anonymous>(instanceName: "currentUser");
+          anonymousModel = AnonymousModel(
+            creationTime: anonymous.creationTime,
+            lastSignInTime: anonymous.lastSignInTime,
+            refreshToken: anonymous.refreshToken,
+            uid: anonymous.uid
+          );
+          sl.unregister<Anonymous>(instanceName: "currentUser");
+        }
+        await SharedPrefHelper.removePersonLocallyByKey("anonymousModel");
+
         await SharedPrefHelper.storePersonLocallyByKey(
             "userModel", jsonEncode(userModel.toJson()));
-        await _storePersonToFirestore(user: userModel);
+
+        await _storePersonToFirestore(anonymous: anonymousModel, user: userModel);
 
         return userModel;
       } else {
@@ -235,6 +265,22 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
       throw ServerException();
     }
   }
+
+  linkAnonymousModelDataToUser(AnonymousModel anonymous, DocumentReference
+  <Map<String, dynamic>> userDocRef) async {
+    logger.log("AuthenticationDataSource:linkAnonymousModelDataToUser()", "Started");
+
+    var anonymousModel =
+      await FirebaseFirestore.instance
+          .collection("anonymous")
+          .doc(anonymous.uid)
+          .get()
+          .then((value) => value.data()!);
+
+    userDocRef.update({"viewedArticles": anonymousModel["viewedArticles"]});
+
+  }
+
 
   @override
   Future<UserModel> userSignIn(AuthParams params) async {
@@ -299,6 +345,12 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
       userModel.personRoles.add(PersonRole.user);
 
       // sl.registerLazySingleton<User>(() => userModel);
+      // Anonymous to user flow: If anonymous user exists, unregister it
+      if(sl.isRegistered<Anonymous>(instanceName: "currentUser")) {
+        logger.log("AuthenticationDataSource:anonymousToUser()", "Unregistering anonymous user");
+        sl.unregister<Anonymous>(instanceName: "currentUser");
+      }
+      await SharedPrefHelper.removePersonLocallyByKey("anonymousModel");
 
       await SharedPrefHelper.storePersonLocallyByKey(
           "userModel", jsonEncode(userModel.toJson()));
@@ -728,4 +780,5 @@ class AuthenticationDataSourceImpl implements AuthenticationDataSource {
       throw ServerException();
     }
   }
+
 }

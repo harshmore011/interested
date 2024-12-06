@@ -14,7 +14,9 @@ class SignInCard extends StatefulWidget {
 
   final PersonRole personRole;
 
-  const SignInCard({super.key, required this.personRole});
+  final AuthSuccessNavigation? navigateTo;
+
+  const SignInCard({super.key, required this.personRole, this.navigateTo});
 
   @override
   State<SignInCard> createState() => _SignInCardState();
@@ -97,7 +99,8 @@ class _SignInCardState extends State<SignInCard> {
           // crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-             Text(_personRole == PersonRole.user ? "User Sign In" :
+             Text(_personRole == PersonRole.user || _personRole == PersonRole.anonymous
+                 ? "User Sign In" :
               "Publisher Sign In",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
             ),
@@ -188,7 +191,8 @@ class _SignInCardState extends State<SignInCard> {
                                         password:
                                         _passwordController.text));
 
-                                if (_personRole == PersonRole.user) {
+                                if (_personRole == PersonRole.user ||
+                                    _personRole == PersonRole.anonymous) {
                                   event = UserSignInEvent(
                                     params: params,
                                   );
@@ -262,7 +266,8 @@ class _SignInCardState extends State<SignInCard> {
                                   authProvider: AuthenticationProvider
                                       .google,);
 
-                              if (_personRole == PersonRole.user) {
+                              if (_personRole == PersonRole.user ||
+                                  _personRole == PersonRole.anonymous) {
                                 event = UserSignInEvent(
                                   params: params,
                                 );
@@ -323,9 +328,23 @@ class _SignInCardState extends State<SignInCard> {
               logger.log("SignUpCard: LISTENER","current state: ${state.runtimeType}");
 
               if (state is UserSignedInState) {
-                Navigator.of(context).pushNamed("/homePage");
+                if (_personRole == PersonRole.anonymous) {
+                  Navigator.of(context).pop();
+                }
+                if(widget.navigateTo == AuthSuccessNavigation.stay) {
+                  return;
+                }
+                Navigator.of(context).pushNamedAndRemoveUntil("/homePage",
+                    (Route<dynamic> route) => false);
               } else if (state is PublisherSignedInState) {
-                Navigator.of(context).pushNamed("/publisherHomePage");
+                if (_personRole == PersonRole.anonymous) {
+                  Navigator.of(context).pop();
+                }
+                if(widget.navigateTo == AuthSuccessNavigation.stay) {
+                  return;
+                }
+                Navigator.of(context).pushNamedAndRemoveUntil("/publisherHomePage",
+                    (Route<dynamic> route) => false);
               } else if (state is FailureState) {
                 SnackBarMessage.showSnackBar(
                     message: state.message, context: context);

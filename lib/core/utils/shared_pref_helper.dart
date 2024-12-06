@@ -28,7 +28,9 @@ class SharedPrefHelper {
     SharedPreferencesWithCacheOptions(
       allowList: <String>{"anonymousModel","userModel","publisherModel"},
     ));
-    pref.remove(key);
+    if(pref.containsKey(key)) {
+      pref.remove(key);
+    }
   }
 
 
@@ -54,8 +56,10 @@ class SharedPrefHelper {
       json = pref.getString("anonymousModel");
       logger.log("SharedPrefHelper", "reloadCurrentUser(): Current anonymous user: $json");
       if(!sl.isRegistered<Anonymous>(instanceName: "currentUser")) {
-        sl.registerLazySingleton<Anonymous>(() => AnonymousModel.fromJson(jsonDecode(json!))
+        sl.registerSingleton<Anonymous>(AnonymousModel.fromJson(jsonDecode(json!))
       , instanceName: "currentUser");
+        // registerLazySingleton<Anonymous>(() => AnonymousModel.fromJson(jsonDecode(json!))
+      // , instanceName: "currentUser");
       }
       // sl.registerSingleton<PersonRole>(PersonRole.anonymous, instanceName: "currentUser");
 
@@ -63,8 +67,10 @@ class SharedPrefHelper {
       json = pref.getString("userModel");
       logger.log("SharedPrefHelper", "reloadCurrentUser(): Current user user: $json");
       if(!sl.isRegistered<User>(instanceName: "currentUser")) {
-        sl.registerLazySingleton<User>(() => UserModel.fromJson(jsonDecode(json!)),
+        sl.registerSingleton<User>(UserModel.fromJson(jsonDecode(json!)),
       instanceName: "currentUser");
+        // sl.registerLazySingleton<User>(() => UserModel.fromJson(jsonDecode(json!)),
+      // instanceName: "currentUser");
       }
       // sl.registerSingleton<PersonRole>(PersonRole.user, instanceName: "currentUser");
 
@@ -72,8 +78,10 @@ class SharedPrefHelper {
       json = pref.getString("publisherModel");
       logger.log("SharedPrefHelper", "reloadCurrentUser(): Current publisher user: $json");
       if(!sl.isRegistered<Publisher>(instanceName: "currentUser")) {
-        sl.registerLazySingleton<Publisher>(() => PublisherModel.fromJson(jsonDecode(json!)),
+        sl.registerSingleton<Publisher>(PublisherModel.fromJson(jsonDecode(json!)),
       instanceName: "currentUser");
+        // sl.registerLazySingleton<Publisher>(() => PublisherModel.fromJson(jsonDecode(json!)),
+      // instanceName: "currentUser");
       }
       // sl.registerSingleton<PersonRole>(PersonRole.publisher, instanceName: "currentUser");
     }

@@ -3,12 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/di/dependency_injector.dart';
-import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/auth_helper.dart';
 import '../../../../../core/utils/debug_logger.dart';
 import '../../../../../core/utils/shared_pref_helper.dart';
-import '../../../../../core/utils/snackbar_message.dart';
 import '../../../../authentication/domain/entities/anonymous_entity.dart';
+import '../../../../authentication/domain/entities/auth.dart';
 import '../../../../authentication/domain/entities/user_entity.dart';
 import '../../../../authentication/presentation/blocs/authentication_bloc.dart';
 import '../../../../authentication/presentation/blocs/authentication_event.dart';
@@ -39,9 +38,12 @@ class _HomePageState extends State<HomePage> {
 
   @override
   void initState() {
-    super.initState();
-    // Dispatching the Event
 
+    Future.delayed(Duration.zero, () async {
+      await SharedPrefHelper.reloadCurrentUser();
+    });
+
+    // Dispatching the Event
     logger.log("_initState()", "Started, calling getArticlesEvent:");
     BlocProvider.of<ArticleInteractionBloc>(context)
         .add(GetArticlesEvent(params: ArticleInteractionParams(articleId: "",
@@ -49,12 +51,13 @@ class _HomePageState extends State<HomePage> {
 
     _scrollController.addListener(_loadMoreItems);
 
+    super.initState();
   }
 
   @override
   void dispose() {
-    super.dispose();
     _scrollController.dispose();
+    super.dispose();
   }
 
   void _loadMoreItems() {
@@ -85,25 +88,26 @@ class _HomePageState extends State<HomePage> {
                   fontSize: 18),
             ),
             actions: [
-              if (sl.isRegistered<Anonymous>(instanceName: "currentUser"))
-              TextButton(
+             /* if (sl.isRegistered<Anonymous>(instanceName: "currentUser"))
+              MaterialButton(
                 child: const Text("Sign up"),
-                onPressed: () async {
-                 /* if(!sl.isRegistered(instanceName: "currentUser")){
+                onPressed: () {
+                 *//* if(!sl.isRegistered(instanceName: "currentUser")){
                     await SharedPrefHelper.reloadCurrentUser();
-                  } */
+                  } *//*
                   AuthHelper.showAuthDialog(context);
                 },
-              ),
+              ),*/
               if (sl.isRegistered<Anonymous>(instanceName: "currentUser"))
               MaterialButton(
                 // color: AppTheme.colorPrimary,
-                child: const Text("Log in"),
-                onPressed: () async {
+                child: const Text("Sign up"),
+                onPressed: () {
                  /* if(!sl.isRegistered(instanceName: "currentUser")){
                     await SharedPrefHelper.reloadCurrentUser();
                   } */
-                  AuthHelper.showAuthDialog(context);
+                  AuthHelper.showAuthDialog(context,
+                      navigateTo: AuthSuccessNavigation.stay);
                 },
               ),
               /*IconButton(
@@ -258,7 +262,9 @@ class _HomePageState extends State<HomePage> {
                         _articles.addAll(state.response.$1);
                         _lastDoc = state.response.$2;
                       // });
-                    } else if (state is FailureState) {
+                    } else if (state is FailureState && state.message !=
+                        "Unauthorized user") {
+
                       return Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -285,10 +291,10 @@ class _HomePageState extends State<HomePage> {
                     }
 
                     if (_articles.isEmpty) {
-                      // emptyListMessage = "Start searching to get personalized articles!";
+                      emptyListMessage = "Start searching to get personalized articles!";
 
                       return Center(
-                        child: Text(emptyListMessage ?? "Loading..."),
+                        child: Text(emptyListMessage),
                       );
                     }
 

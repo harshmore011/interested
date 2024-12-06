@@ -25,7 +25,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
     if (await networkInfo.isConnected) {
       try {
         var anonymous = await authenticationDataSource.anonymousSignIn();
-        sl.registerLazySingleton<Anonymous>(() => anonymous);
+        sl.registerSingleton<Anonymous>(anonymous);
 
         return Right(anonymous);
       } on ServerException {
@@ -44,7 +44,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
     if (await networkInfo.isConnected) {
       try {
         var user = await authenticationDataSource.anonymousToUser(params);
-        sl.registerLazySingleton<User>(() => user);
+        sl.registerSingleton<User>(user);
 
         return Right(user);
       } on ServerException {
@@ -69,7 +69,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
     if (await networkInfo.isConnected) {
       try {
         var user = await authenticationDataSource.userSignIn(params);
-        sl.registerLazySingleton<User>(() => user);
+        sl.registerSingleton<User>(user);
 
         return Right(user);
       } on ServerException {
@@ -101,7 +101,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
     if (await networkInfo.isConnected) {
       try {
         var user = await authenticationDataSource.userSignUp(params);
-        sl.registerLazySingleton<User>(() => user);
+        sl.registerSingleton<User>(user);
 
         return Right(user);
       } on ServerException {
@@ -141,7 +141,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
     if (await networkInfo.isConnected) {
       try {
         var publisher = await authenticationDataSource.publisherSignIn(params);
-        sl.registerLazySingleton<Publisher>(() => publisher);
+        sl.registerSingleton<Publisher>(publisher);
 
         return Right(publisher);
       } on ServerException {
@@ -174,7 +174,7 @@ class AuthenticationRepositoryImpl implements AuthenticationRepository {
     if (await networkInfo.isConnected) {
       try {
         var publisher = await authenticationDataSource.publisherSignUp(params);
-        sl.registerLazySingleton<Publisher>(() => publisher);
+        sl.registerSingleton<Publisher>(publisher);
 
         return Right(publisher);
       } on ServerException {

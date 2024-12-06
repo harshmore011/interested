@@ -173,6 +173,12 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
             "ArticleManagementDataSource:_storeArticleImagesToFirebaseStorage()",
             "url: $url");
         article.images.add(url);
+        await FirebaseFirestore.instance
+            .collection("articles")
+            .doc(articleId)
+            .update({
+          "images": FieldValue.arrayUnion([url])
+        });
       });
     }
   }
@@ -319,29 +325,37 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
   Future<List<ArticleModel>> getDraftArticles() async {
     logger.log("ArticleManagementDataSource:getDraftArticles()", "Started");
 
-    if(!sl.isRegistered<Publisher>(instanceName: "currentUser")){
-      await SharedPrefHelper.reloadCurrentUser();
+    try {
+      if (!sl.isRegistered<Publisher>(instanceName: "currentUser")) {
+        await SharedPrefHelper.reloadCurrentUser();
+      }
+
+      Publisher publisher = sl.get<Publisher>(instanceName: "currentUser");
+
+      List<ArticleModel> articles = await FirebaseFirestore.instance
+          .collection("articles")
+          .where("publisher.email", isEqualTo: publisher.email)
+          .where(
+          "currentPublishState", isEqualTo: ArticlePublishState.draft.name)
+          .where("currentState", isNotEqualTo: ArticleState.deleted.name)
+          .get()
+          .then((snapshot) =>
+          snapshot.docs
+              .map((doc) => ArticleModel.fromJson(doc.data()))
+              .toList());
+
+      return articles;
+    } catch (e) {
+      logger.log("ArticleManagementDataSource:getDraftArticles()", e.toString());
+      throw ServerException();
     }
-
-    Publisher publisher = sl.get<Publisher>(instanceName: "currentUser");
-
-    List<ArticleModel> articles = await FirebaseFirestore.instance
-        .collection("articles")
-        .where("publisher.email", isEqualTo: publisher.email)
-        .where("currentPublishState", isEqualTo: ArticlePublishState.draft.name)
-        .where("currentState", isNotEqualTo: ArticleState.deleted.name)
-        .get()
-        .then((snapshot) => snapshot.docs
-            .map((doc) => ArticleModel.fromJson(doc.data()))
-            .toList());
-
-    return articles;
   }
 
   @override
   Future<List<ArticleModel>> getPublishedArticles() async {
     logger.log("ArticleManagementDataSource:getPublishedArticles()", "Started");
 
+    try{
     if(!sl.isRegistered<Publisher>(instanceName: "currentUser")){
       await SharedPrefHelper.reloadCurrentUser();
     }
@@ -360,12 +374,17 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
             .toList());
 
     return articles;
+    } catch (e) {
+    logger.log("ArticleManagementDataSource:getDraftArticles()", e.toString());
+    throw ServerException();
+    }
   }
 
   @override
   Future<List<ArticleModel>> getScheduledArticles() async {
     logger.log("ArticleManagementDataSource:getScheduledArticles()", "Started");
 
+    try {
     if(!sl.isRegistered<Publisher>(instanceName: "currentUser")){
       await SharedPrefHelper.reloadCurrentUser();
     }
@@ -384,5 +403,9 @@ class ArticleManagementDataSourceImpl implements ArticleManagementDataSource {
             .toList());
 
     return articles;
+    } catch (e) {
+      logger.log("ArticleManagementDataSource:getDraftArticles()", e.toString());
+      throw ServerException();
+    }
   }
 }

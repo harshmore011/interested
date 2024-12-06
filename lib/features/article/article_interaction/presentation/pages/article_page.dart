@@ -6,6 +6,7 @@ import '../../../../../core/utils/auth_helper.dart';
 import '../../../../../core/utils/datetime_helper.dart';
 import '../../../../../core/utils/debug_logger.dart';
 import '../../../../../core/utils/shared_pref_helper.dart';
+import '../../../../authentication/domain/entities/auth.dart';
 import '../../../../authentication/domain/entities/user_entity.dart';
 import '../../../entities/article_entity.dart';
 import '../../../models/article_model.dart';
@@ -16,7 +17,6 @@ import '../blocs/article_interaction_state.dart';
 import '../widgets/comment_widget.dart';
 
 class ArticlePage extends StatefulWidget {
-
   final Article article;
 
   const ArticlePage({super.key, required this.article});
@@ -29,22 +29,22 @@ class _ArticlePageState extends State<ArticlePage> {
   late final Article article;
   bool _isLiked = false;
   bool _isSaved = false;
+  bool _unAuthorizedUser = false;
+
   final TextEditingController _commentController = TextEditingController();
 
   @override
   void initState() {
-
     article = widget.article;
     BlocProvider.of<ArticleInteractionBloc>(context)
-    .add(ViewArticleEvent(articleId: article.id!));
+        .add(ViewArticleEvent(articleId: article.id!));
 
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-
- /*   if (ModalRoute.of(context)!.settings.arguments != null) {
+    /*   if (ModalRoute.of(context)!.settings.arguments != null) {
       article = ModalRoute
           .of(context)!
           .settings
@@ -68,8 +68,8 @@ class _ArticlePageState extends State<ArticlePage> {
       body: ListView(
         children: [
           Padding(
-            padding:
-                const EdgeInsets.only(top: 130, left: 275, right: 275, bottom: 200),
+            padding: const EdgeInsets.only(
+                top: 130, left: 275, right: 275, bottom: 200),
             child: Column(children: [
               Text(
                 article.title,
@@ -90,7 +90,8 @@ class _ArticlePageState extends State<ArticlePage> {
                   ),
                   Row(
                     children: [
-                     const Text("Published by ", style: TextStyle(fontSize: 18)),
+                      const Text("Published by ",
+                          style: TextStyle(fontSize: 18)),
                       Text(
                         article.publisher.name,
                         style: const TextStyle(
@@ -103,14 +104,14 @@ class _ArticlePageState extends State<ArticlePage> {
               // Image.network("src", filterQuality: FilterQuality.low,)
 
               if (article.images.isNotEmpty)
-              Image(
-                // image: AssetImage("images/app_icon.png"),
-                // image: Image.memory("images/app_icon.png"),
-                image: NetworkImage(article.images[0]),
-                filterQuality: FilterQuality.medium,
-                width: 700,
-                height: 600,
-              ),
+                Image(
+                  // image: AssetImage("images/app_icon.png"),
+                  // image: Image.memory("images/app_icon.png"),
+                  image: NetworkImage(article.images[0]),
+                  filterQuality: FilterQuality.medium,
+                  width: 700,
+                  height: 600,
+                ),
               const SizedBox(
                 height: 32,
               ),
@@ -130,10 +131,11 @@ class _ArticlePageState extends State<ArticlePage> {
                     // softWrap: true,
                     // textAlign: TextAlign.center,
                   ),
-                  for (var label in article.labels) Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Chip(label: Text(label)),
-                  ),
+                  for (var label in article.labels)
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Chip(label: Text(label)),
+                    ),
                 ],
               ),
               const SizedBox(
@@ -142,12 +144,12 @@ class _ArticlePageState extends State<ArticlePage> {
               BlocBuilder<ArticleInteractionBloc, ArticleInteractionState>(
                   builder: (context, state) {
                 CommentModel? comment;
-                bool unAuthorizedUser = false;
 
-                if(state is FailureState) {
-
-                  if(state.message == "Unauthorized user"){
-                    unAuthorizedUser = true;
+                if (state is FailureState) {
+                  if (state.message == "Unauthorized user") {
+                    // setState(() {
+                    _unAuthorizedUser = true;
+                    // });
                   }
                 }
 
@@ -161,27 +163,34 @@ class _ArticlePageState extends State<ArticlePage> {
                           children: [
                             IconButton(
                               onPressed: () {
-                                logger.log("ArticlePage:build()", "Like button pressed");
-                                if(unAuthorizedUser) {
+                                logger.log("ArticlePage:build()",
+                                    "Like button pressed");
+                                if (_unAuthorizedUser) {
                                   Future.delayed(Duration(seconds: 1), () {
-                                    if(!context.mounted) return;
-                                    AuthHelper.showAuthDialog(context);
+                                    if (!context.mounted) return;
+                                    AuthHelper.showAuthDialog(context,
+                                        navigateTo: AuthSuccessNavigation.stay);
                                   });
                                   return;
-                                }
-
-                                if (!_isLiked) {
-                                  _isLiked = !_isLiked;
-                                  context.read<ArticleInteractionBloc>().add(
-                                      LikeArticleEvent(articleId: article.id!));
                                 } else {
-                                  context.read<ArticleInteractionBloc>().add(
-                                      UnlikeArticleEvent(
-                                          articleId: article.id!));
+                                  if (!_isLiked) {
+                                    _isLiked = !_isLiked;
+                                    context.read<ArticleInteractionBloc>().add(
+                                        LikeArticleEvent(
+                                            articleId: article.id!));
+                                  } else {
+                                    context.read<ArticleInteractionBloc>().add(
+                                        UnlikeArticleEvent(
+                                            articleId: article.id!));
+                                  }
+
+                                  if (state is ArticleLikedState ||
+                                      state is ArticleUnlikedState) {
+                                    setState(() {
+                                      _isLiked = _isLiked;
+                                    });
+                                  }
                                 }
-                                setState(() {
-                                  _isLiked = _isLiked;
-                                });
                               },
                               icon: Icon(_isLiked
                                   ? Icons.thumb_up
@@ -202,26 +211,31 @@ class _ArticlePageState extends State<ArticlePage> {
                         ),
                         IconButton(
                           onPressed: () {
-                            if(unAuthorizedUser) {
+                            if (_unAuthorizedUser) {
                               Future.delayed(Duration(seconds: 1), () {
-                                if(!context.mounted) return;
-                                AuthHelper.showAuthDialog(context);
+                                if (!context.mounted) return;
+                                AuthHelper.showAuthDialog(context,
+                                    navigateTo: AuthSuccessNavigation.stay);
                               });
                               return;
-                            }
-                            _isSaved = !_isSaved;
-
-                            if (_isSaved) {
-                              context.read<ArticleInteractionBloc>().add(
-                                  SaveArticleEvent(articleId: article.id!));
                             } else {
-                              context.read<ArticleInteractionBloc>().add(
-                                  UnSaveArticleEvent(articleId: article.id!));
-                            }
-                            setState(() {});
-                           /* context
+                              _isSaved = !_isSaved;
+
+                              if (_isSaved) {
+                                context.read<ArticleInteractionBloc>().add(
+                                    SaveArticleEvent(articleId: article.id!));
+                              } else {
+                                context.read<ArticleInteractionBloc>().add(
+                                    UnSaveArticleEvent(articleId: article.id!));
+                              }
+                              if (state is ArticleSavedState ||
+                                  state is ArticleUnsavedState) {
+                                setState(() {});
+                              }
+                              /* context
                                 .read<ArticleInteractionBloc>()
                                 .add(SaveArticleEvent(articleId: article.id!));*/
+                            }
                           },
                           icon: Icon(_isSaved
                               ? Icons.bookmark
@@ -250,44 +264,50 @@ class _ArticlePageState extends State<ArticlePage> {
                     const SizedBox(height: 16),
                     ElevatedButton(
                       onPressed: () async {
-                        if(unAuthorizedUser) {
+                        if (_unAuthorizedUser) {
                           Future.delayed(Duration(seconds: 1), () {
-                            if(!context.mounted) return;
-                            AuthHelper.showAuthDialog(context);
+                            if (!context.mounted) return;
+                            AuthHelper.showAuthDialog(context,
+                                navigateTo: AuthSuccessNavigation.stay);
                           });
                           return;
+                        } else {
+                          if (_commentController.text.isEmpty) {
+                            return;
+                          }
+                          if (!sl.isRegistered<User>(
+                              instanceName: "currentUser")) {
+                            await SharedPrefHelper.reloadCurrentUser();
+                          }
+
+                          User user = sl.get<User>(instanceName: "currentUser");
+
+                          comment = CommentModel(
+                            id: DateTime.now()
+                                .millisecondsSinceEpoch
+                                .toString(),
+                            comment: _commentController.text,
+                            dateTimeCommented: DateTime.now(),
+                            user: user.name,
+                            isLikedByPublisher: false,
+                          );
+
+                          if (!context.mounted) return;
+                          context
+                              .read<ArticleInteractionBloc>()
+                              .add(CommentOnArticleEvent(
+                                params: ArticleInteractionParams(
+                                  articleId: article.id!,
+                                  comment: comment,
+                                ),
+                              ));
+
+                              if(state is CommentAddedState) {
+                                setState(() {
+                                  article.comments.add(comment!.toEntity());
+                                });
+                              }
                         }
-
-                        if (_commentController.text.isEmpty) {
-                          return;
-                        }
-                        if(!sl.isRegistered<User>(instanceName: "currentUser")){
-                          await SharedPrefHelper.reloadCurrentUser();
-                        }
-
-                        User user = sl.get<User>(instanceName: "currentUser");
-
-                        comment = CommentModel(
-                          id: DateTime.now().millisecondsSinceEpoch.toString(),
-                          comment: _commentController.text,
-                          dateTimeCommented: DateTime.now(),
-                          user: user.name,
-                          isLikedByPublisher: false,
-                        );
-
-                        if(!context.mounted) return;
-                        context
-                            .read<ArticleInteractionBloc>()
-                            .add(CommentOnArticleEvent(
-                              params: ArticleInteractionParams(
-                                articleId: article.id!,
-                                comment: comment,
-                              ),
-                            ));
-
-                        setState(() {
-                          article.comments.add(comment!.toEntity());
-                        });
                       },
                       child: const Text("Comment"),
                     ),
@@ -307,6 +327,8 @@ class _ArticlePageState extends State<ArticlePage> {
                             itemCount: article.comments.length,
                             itemBuilder: (context, index) {
                               return CommentWidget(
+                                state: state,
+                                isUnAuthorizedUser: _unAuthorizedUser,
                                 article: article,
                                 comment: article.comments[index],
                               );
@@ -321,6 +343,4 @@ class _ArticlePageState extends State<ArticlePage> {
       ),
     ));
   }
-
-
 }

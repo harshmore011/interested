@@ -1,9 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 import 'core/di/dependency_injector.dart';
 import 'core/routes/app_router.dart';
 import 'core/utils/debug_logger.dart';
@@ -23,26 +26,7 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-  await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
-  FirebaseFirestore.instance.useFirestoreEmulator('localhost', 4000);
-  await FirebaseStorage.instance.useStorageEmulator("localhost", 5001);
-  //    "hosting": {
-//      "port": 7000
-//    },
-
-  // "hosting": {
-  // "source": ".",
-  // "ignore": [
-  // "firebase.json",
-  // "**/.*",
-  // "**/node_modules/**"
-  // ],
-  // "frameworksBackend": {
-  // "region": "asia-east1"
-  // }
-  // }
-  // Firebase UI on :9200
-
+   await initFirebaseEmulators();
 
   await injectDependencies();
   logger.log("main:", "");
@@ -64,7 +48,6 @@ Future<void> main() async {
       // const MyApp());
 }
 
-
 class MyApp extends StatelessWidget {
 
   final String initialRoute;
@@ -74,15 +57,53 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
 
-    debugPrint("main: build()");
+    logger.log("MyApp: build()", "");
 
     return MaterialApp(
       title: 'interested!',
       theme: sl<AppTheme>().lightTheme,
       debugShowCheckedModeBanner: false,
       onGenerateRoute: (settings) => sl<AppRouter>().generateRoute(settings, initialRoute),
-      initialRoute: this.initialRoute,
+      initialRoute: initialRoute,
     );
   }
 
 }
+
+
+Future<void> initFirebaseEmulators() async {
+
+  await FirebaseAuth.instance.useAuthEmulator('localhost', 9099);
+  FirebaseFirestore.instance.useFirestoreEmulator('localhost', 4000);
+  await FirebaseStorage.instance.useStorageEmulator("localhost", 5001);
+
+
+/*  FlutterError.onError = (errorDetails) {errorDetails.toString(minLevel: DiagnosticLevel.error);
+    logger.log("main(): FlutterError for crashlytics", "Error: $errorDetails");
+    FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+  };
+  // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+  PlatformDispatcher.instance.onError = (error, stack) {
+    logger.log("main(): PlatformDispatcher for async errors", "Error: $error");
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };*/
+
+  //    "hosting": {
+//      "port": 7000
+//    },
+
+  // "hosting": {
+  // "source": ".",
+  // "ignore": [
+  // "firebase.json",
+  // "**/.*",
+  // "**/node_modules/**"
+  // ],
+  // "frameworksBackend": {
+  // "region": "asia-east1"
+  // }
+  // }
+  // Firebase UI on :9200
+}
+

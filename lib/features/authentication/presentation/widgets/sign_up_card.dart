@@ -13,8 +13,9 @@ import '../blocs/authentication_state.dart';
 class SignUpCard extends StatefulWidget {
 
   final PersonRole personRole;
+  final AuthSuccessNavigation? navigateTo;
 
-  const SignUpCard({super.key, required this.personRole});
+  const SignUpCard({super.key, required this.personRole, this.navigateTo});
 
   @override
   State<SignUpCard> createState() => _SignUpCardState();
@@ -344,9 +345,23 @@ class _SignUpCardState extends State<SignUpCard> {
               if (state is AnonymousSignedInState ||
                   state is AnonymousLinkedToUserState ||
                   state is UserSignedUpState) {
-                Navigator.of(context).pushNamed("/homePage");
+                if (_personRole == PersonRole.anonymous) {
+                  Navigator.of(context).pop();
+                }
+                if(widget.navigateTo == AuthSuccessNavigation.stay) {
+                  return;
+                }
+                Navigator.of(context).pushNamedAndRemoveUntil("/homePage"
+                , (route) => false);
               } else if (state is PublisherSignedUpState) {
-                Navigator.of(context).pushNamed("/publisherHomePage");
+                if (_personRole == PersonRole.anonymous) {
+                  Navigator.of(context).pop();
+                }
+                if(widget.navigateTo == AuthSuccessNavigation.stay) {
+                  return;
+                }
+                Navigator.of(context).pushNamedAndRemoveUntil("/publisherHomePage"
+                , (route) => false);
               } else if (state is FailureState) {
                 SnackBarMessage.showSnackBar(
                     message: state.message, context: context);

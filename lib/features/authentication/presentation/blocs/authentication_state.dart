@@ -1,6 +1,4 @@
 
-// ignore_for_file: unused_import
-
 import 'package:equatable/equatable.dart';
 
 abstract class AuthenticationState extends Equatable {

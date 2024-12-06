@@ -310,6 +310,11 @@ class ArticleInteractionDataSourceImpl implements ArticleInteractionDataSource {
         }).onError((error, stackTrace) => logger.log(
                 "ArticleInteractionDataSource:incrementArticleViews()",
                 "Error: $error"));
+
+        return await FirebaseFirestore.instance
+            .collection("articles")
+            .doc(id)
+            .update({"views": FieldValue.increment(1)});
       } catch (e) {
         logger.log("ArticleInteractionDataSource:incrementArticleViews()",
             "Error: $e");
