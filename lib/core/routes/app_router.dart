@@ -83,7 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: sl<AppTheme>().lightTheme.colorScheme.inversePrimary,
+        backgroundColor: colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
       body: SingleChildScrollView(

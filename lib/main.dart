@@ -17,6 +17,7 @@ import 'features/authentication/presentation/blocs/authentication_bloc.dart';
 import 'features/onboarding/presentation/blocs/onboarding_bloc.dart';
 import 'firebase_options.dart';
 import 'core/theme/app_theme.dart';
+import 'features/article/article_management/data/datasources/article_management_datasource.dart';
 
 Future<void> main() async {
 
@@ -33,6 +34,16 @@ Future<void> main() async {
 
   final String initialRoute = await SharedPrefHelper.decideInitialRoute();
   logger.log("main:", "initialRoute: $initialRoute");
+
+  ErrorWidget.builder = (_) => const Center(
+    child: Text("Something went wrong, we regret the inconvenience!"),
+  ); // This line does the magic!
+
+  FlutterError.onError = (details) {
+    FlutterError.dumpErrorToConsole(details);
+    // if (!kReleaseMode) return;
+    // Send to your crashlytics service...
+  };
 
   runApp(
       MultiBlocProvider(

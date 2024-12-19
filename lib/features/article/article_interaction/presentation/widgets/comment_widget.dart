@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../../core/utils/auth_helper.dart';
 import '../../../../../core/utils/datetime_helper.dart';
+import '../../../../../core/utils/debug_logger.dart';
 import '../../../../authentication/domain/entities/auth.dart';
 import '../../../entities/article_entity.dart';
 import '../../../models/article_model.dart';
@@ -14,7 +15,6 @@ import '../blocs/article_interaction_state.dart';
 class CommentWidget extends StatefulWidget {
   final ArticleInteractionState state;
   final Comment comment;
-  final bool isUnAuthorizedUser;
   final Article article;
 
   const CommentWidget({
@@ -22,7 +22,6 @@ class CommentWidget extends StatefulWidget {
     required this.comment,
     required this.state,
     required this.article,
-    required this.isUnAuthorizedUser,
   });
 
   @override
@@ -84,13 +83,14 @@ class _CommentWidgetState extends State<CommentWidget> {
                 Padding(
                   padding: const EdgeInsets.only(left: 16.0, top: 5.0),
                   child: TextButton(
-                      onPressed: () {
-                        if (widget.isUnAuthorizedUser) {
-                          Future.delayed(Duration(seconds: 1), () {
+                      onPressed: () async {
+                        logger.log("CommentWidget", "onPressed(): state: $state");
+                        if (await AuthHelper.isUserUnAuthorized()) {
+                          // Future.delayed(Duration(seconds: 1), () {
                             if (!context.mounted) return;
                             AuthHelper.showAuthDialog(context,
                                 navigateTo: AuthSuccessNavigation.stay);
-                          });
+                          // });
                           return;
                         }
 
@@ -110,6 +110,7 @@ class _CommentWidgetState extends State<CommentWidget> {
                             isLikedByPublisher: comment.isLikedByPublisher,
                             dateTimeCommented: comment.dateTimeCommented,
                           );
+                          if (!context.mounted) return;
                           context.read<ArticleInteractionBloc>().add(
                                 AddReplyToCommentEvent(
                                   params: ArticleInteractionParams(
@@ -121,11 +122,12 @@ class _CommentWidgetState extends State<CommentWidget> {
                               );
                         }
                         if (state is ReplyAddedState) {
+                          logger.log("CommentWidget", "onPressed(): in ReplyAddedState()");
+                          if (reply != null) {
+                            comment.replies.add(reply.toEntity());
+                          }
+                          isReplying = !isReplying;
                           setState(() {
-                            if (reply != null) {
-                              comment.replies.add(reply.toEntity());
-                            }
-                            isReplying = !isReplying;
                           });
                         }
                       },
@@ -133,6 +135,8 @@ class _CommentWidgetState extends State<CommentWidget> {
                 ),
               ],
             ),
+            buildWhen: (previous, current) => (current is ReplyAddedState &&
+                previous is LoadingState),
           ),
           const SizedBox(height: 8),
           if (comment.replies.isNotEmpty)

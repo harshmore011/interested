@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../../core/di/dependency_injector.dart';
+import '../../../../../core/theme/app_theme.dart';
 import '../../../../../core/utils/auth_helper.dart';
 import '../../../../../core/utils/debug_logger.dart';
 import '../../../../../core/utils/shared_pref_helper.dart';
@@ -100,8 +101,8 @@ class _HomePageState extends State<HomePage> {
               ),*/
               if (sl.isRegistered<Anonymous>(instanceName: "currentUser"))
               MaterialButton(
-                // color: AppTheme.colorPrimary,
-                child: const Text("Sign up"),
+                color: Colors.white,
+                child: const Text("Sign up", style: TextStyle(color: AppTheme.colorPrimary),),
                 onPressed: () {
                  /* if(!sl.isRegistered(instanceName: "currentUser")){
                     await SharedPrefHelper.reloadCurrentUser();
@@ -110,6 +111,9 @@ class _HomePageState extends State<HomePage> {
                       navigateTo: AuthSuccessNavigation.stay);
                 },
               ),
+              if (sl.isRegistered<User>(instanceName: "currentUser"))
+               Text(sl<User>(instanceName: "currentUser").name, style:
+               TextStyle(color: AppTheme.colorPrimary),),
               /*IconButton(
                 icon: const Icon(Icons.settings),
                 onPressed: () {
@@ -175,12 +179,14 @@ class _HomePageState extends State<HomePage> {
                         ],
                       ),
 
-                      BlocConsumer<AuthenticationBloc, AuthenticationState>(
-                        builder: (_, state) {
-                          logger.log("HomePage: build: consumer",
-                              "current state: ${state.runtimeType}");
+                      BlocListener<AuthenticationBloc, AuthenticationState>(
+                        // builder: (_, state) {
+                          // logger.log("HomePage: build: consumer",
+                          //     "current state: ${state.runtimeType}");
 
-                          return Column(
+                          // return
+                        child:
+                          Column(
                             children: [
                               const Divider(),
                               ListTile(
@@ -190,9 +196,9 @@ class _HomePageState extends State<HomePage> {
                                 },
                               ),
                             ],
-                          );
-                        },
-                        listener: (_, state) async {
+                          )
+                        // }
+                        , listener: (_, state) async {
                           logger.log("HomePage: LISTENER",
                               "current state: ${state.runtimeType}");
 
@@ -251,7 +257,8 @@ class _HomePageState extends State<HomePage> {
                     String? emptyListMessage;
                     // emptyListMessage = "Start searching to get personalized articles!";
 
-                    if (state is LoadingState && _articles.isEmpty) {
+                    if (state is InitialState || (state is LoadingState &&
+                        _articles.isEmpty)) {
                       return const Center(
                         child: CircularProgressIndicator(),
                       );

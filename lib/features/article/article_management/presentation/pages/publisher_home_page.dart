@@ -10,6 +10,7 @@ import '../../../../authentication/presentation/blocs/authentication_bloc.dart';
 import '../../../../authentication/presentation/blocs/authentication_event.dart';
 import '../../../../authentication/presentation/blocs/authentication_state.dart'
     show AuthenticationState, SignedOutState;
+import '../../data/datasources/article_management_datasource.dart';
 import '../blocs/article_management_bloc.dart';
 import '../blocs/article_management_event.dart';
 import '../blocs/article_management_state.dart';
@@ -26,19 +27,34 @@ class _PublisherHomePageState extends State<PublisherHomePage> {
   int _selectedTileIndex = 0;
 
   @override
-  void initState() {
+  Future<void> initState() async {
     // Dispatching the Event
     BlocProvider.of<ArticleManagementBloc>(context)
         .add(GetDraftArticlesEvent());
 
+    await _periodicallyPublishScheduledArticles();
+
     super.initState();
+  }
+
+  _periodicallyPublishScheduledArticles() async {
+
+    DateTime lastPublishedDate = await SharedPrefHelper.getLastPeriodicPublishedDate();
+
+    // if (lastPublishedDate.difference(DateTime.now()) >= Duration(days: 1)) {
+    if (true) { // IN DEVELOPMENT
+      logger.log("periodicallyPublishScheduledArticles", "Time to publish scheduled"
+          " articles if any.");
+      await sl<ArticleManagementDataSource>().periodicallyPublishScheduledArticles();
+      SharedPrefHelper.setLastPeriodicPublishedDate(DateTime.now().toString());
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
         child: Scaffold(
-          appBar: AppBar(
+      appBar: AppBar(
         automaticallyImplyLeading: true,
         // backgroundColor: Colors.white,
         title: const Text(
@@ -91,89 +107,91 @@ class _PublisherHomePageState extends State<PublisherHomePage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       BlocListener<ArticleManagementBloc,
-                          ArticleManagementState>(
+                              ArticleManagementState>(
                           child:
-                           /*   (context, state) {
+                              /*   (context, state) {
                         logger.log("PublisherHomePage: build: BlocBuilder",
                             "current state: ${state.runtimeType}");
 */
-                        // return
-                          Column(children: [
-                          ListTile(
-                            // tileColor: AppTheme.tertiaryColor,
-                            // selectedTileColor: ,
-                            // selectedColor: ,
-                            selected: _selectedTileIndex == 0,
-                            title: Text('Drafts'),
-                            onTap: () {
-                              setState(() {
-                                _selectedTileIndex = 0;
-                              });
-                              context
-                                  .read<ArticleManagementBloc>()
-                                  .add(GetDraftArticlesEvent());
-                            },
-                          ),
-                          ListTile(
-                            selected: _selectedTileIndex == 1,
-                            title: Text('Published'),
-                            onTap: () {
-                              setState(() {
-                                _selectedTileIndex = 1;
-                              });
-                              context
-                                  .read<ArticleManagementBloc>()
-                                  .add(GetPublishedArticlesEvent());
-                            },
-                          ),
-                          ListTile(
-                            selected: _selectedTileIndex == 2,
-                            title: Text('Scheduled'),
-                            onTap: () {
-                              setState(() {
-                                _selectedTileIndex = 2;
-                              });
-                              context
-                                  .read<ArticleManagementBloc>()
-                                  .add(GetScheduledArticlesEvent());
-                            },
-                          )
-                        ]),
-    listener: (_, state) {
-                       /* logger.log("PublisherHomePage: LISTENER",
+                              // return
+                              Column(children: [
+                            ListTile(
+                              // tileColor: AppTheme.tertiaryColor,
+                              // selectedTileColor: ,
+                              // selectedColor: ,
+                              selected: _selectedTileIndex == 0,
+                              title: Text('Drafts'),
+                              onTap: () {
+                                setState(() {
+                                  _selectedTileIndex = 0;
+                                });
+                                context
+                                    .read<ArticleManagementBloc>()
+                                    .add(GetDraftArticlesEvent());
+                              },
+                            ),
+                            ListTile(
+                              selected: _selectedTileIndex == 1,
+                              title: Text('Published'),
+                              onTap: () {
+                                setState(() {
+                                  _selectedTileIndex = 1;
+                                });
+                                context
+                                    .read<ArticleManagementBloc>()
+                                    .add(GetPublishedArticlesEvent());
+                              },
+                            ),
+                            ListTile(
+                              selected: _selectedTileIndex == 2,
+                              title: Text('Scheduled'),
+                              onTap: () {
+                                setState(() {
+                                  _selectedTileIndex = 2;
+                                });
+                                context
+                                    .read<ArticleManagementBloc>()
+                                    .add(GetScheduledArticlesEvent());
+                              },
+                            )
+                          ]),
+                          listener: (_, state) {
+                            /* logger.log("PublisherHomePage: LISTENER",
                             "current state: ${state.runtimeType}");
                         if (state is DraftArticlesState) {
                           setState(() {
                             _selectedTileIndex = 0;
                           });
                         }*/
-                      },
-                        listenWhen:  (_, state) {
-                          return false;
-                        }
-                      ),
+                          },
+                          listenWhen: (_, state) {
+                            return false;
+                            // return state is DraftArticlesFetchedState ||
+                            //     state is PublishedArticlesFetchedState ||
+                            //     state is ScheduledArticlesFetchedState;
+                          }),
                     ],
                   ),
                   BlocListener<AuthenticationBloc, AuthenticationState>(
                     child:
-                     /*   (_, state) {
+                        /*   (_, state) {
                       logger.log("PublisherHomePage: build: consumer",
                           "current state: ${state.runtimeType}");*/
 
-                      // return
-                      Column(
-                        children: [
-                          const Divider(),
-                          ListTile(
-                            title: Text('Sign Out'),
-                            onTap: () {
-                              context
-                                  .read<AuthenticationBloc>()
-                                  .add(SignOutEvent());
-                            },
-                          ),
-                        ],
-                      ),
+                        // return
+                        Column(
+                      children: [
+                        const Divider(),
+                        ListTile(
+                          title: Text('Sign Out'),
+                          onTap: () {
+                            context
+                                .read<AuthenticationBloc>()
+                                .add(SignOutEvent());
+                          },
+                        ),
+                      ],
+                    ),
                     // },
                     listener: (_, state) async {
                       logger.log("PublisherHomePage: LISTENER",
@@ -226,7 +244,7 @@ class _PublisherHomePageState extends State<PublisherHomePage> {
           Expanded(
             child: BlocConsumer<ArticleManagementBloc, ArticleManagementState>(
               builder: (context, state) {
-                logger.log("PublisherHomePage: build: BlocBuilder 2",
+                logger.log("PublisherHomePage: build: BlocBuilder MAIN",
                     "current state: ${state.runtimeType}");
                 final articles = [];
                 var emptyListMessage = "No articles found";
@@ -238,24 +256,28 @@ class _PublisherHomePageState extends State<PublisherHomePage> {
                 } else if (state is DraftArticlesFetchedState) {
                   articles.addAll(state.articles);
                   if (_selectedTileIndex != 0) {
-                    setState(() {
-                      _selectedTileIndex = 0;
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      setState(() {_selectedTileIndex = 0;});
+
                     });
                   }
                   emptyListMessage = "Start creating a draft article!";
                 } else if (state is PublishedArticlesFetchedState) {
                   articles.addAll(state.articles);
+
                   if (_selectedTileIndex != 1) {
-                    setState(() {
-                      _selectedTileIndex = 1;
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      setState(() {_selectedTileIndex = 1;});
+
                     });
                   }
                   emptyListMessage = "No published articles!";
                 } else if (state is ScheduledArticlesFetchedState) {
                   articles.addAll(state.articles);
                   if (_selectedTileIndex != 2) {
-                    setState(() {
-                      _selectedTileIndex = 2;
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      setState(() {_selectedTileIndex = 2;});
+
                     });
                   }
                   emptyListMessage =
@@ -289,7 +311,8 @@ class _PublisherHomePageState extends State<PublisherHomePage> {
                   );
                 }
 
-                logger.log("PublisherHomePage: build: BlocBuilder 2",
+                logger.log(
+                    "PublisherHomePage: build: BlocBuilder ArticleManagement",
                     "total articles: ${articles.length}");
 
                 return Padding(
@@ -312,17 +335,57 @@ class _PublisherHomePageState extends State<PublisherHomePage> {
                     ],
                   ),
                 );
-              },buildWhen: (previous, current) {
-                return current is DraftArticlesFetchedState ||
-                    current is PublishedArticlesFetchedState ||
-                    current is ScheduledArticlesFetchedState ||
-                    current is LoadingState ||
-                    // current is ArticleScheduledState ||
-                    // current is ArticlePublishedState ||
+              },
+              // listener: (BuildContext context, ArticleManagementState state) {},
+
+              listener: (context, state) {
+                logger.log("ArticleWidget:build: BlocListener",
+                    "current state: ${state.runtimeType}");
+                if (state is ArticlePublishedState) {
+                  SnackBarMessage.showSnackBar(
+                      message: "The article is published", context: context);
+
+                  context
+                      .read<ArticleManagementBloc>()
+                      .add(GetPublishedArticlesEvent());
+                } else if (state is ArticleScheduledState) {
+                  SnackBarMessage.showSnackBar(
+                      message:
+                          // "Article will be published on ${article.dateTimeScheduled}",
+                          "Article scheduled for publishing",
+                      context: context);
+                  context
+                      .read<ArticleManagementBloc>()
+                      .add(GetScheduledArticlesEvent());
+                } else if (state is ArticleUnpublishedState) {
+                  SnackBarMessage.showSnackBar(
+                      message: "Article moved to draft", context: context);
+                  context
+                      .read<ArticleManagementBloc>()
+                      .add(GetDraftArticlesEvent());
+                } else if (state is ArticleMarkedForDeletionState) {
+                  SnackBarMessage.showSnackBar(
+                      message: "Article deleted", context: context);
+                  /* context.read<ArticleManagementBloc>().add(
+                                    DeleteArticleEvent(id: id));*/
+                  context
+                      .read<ArticleManagementBloc>()
+                      .add(GetDraftArticlesEvent());
+                } else if (state is FailureState) {
+                  SnackBarMessage.showSnackBar(
+                      message: state.message, context: context);
+                }
+              },
+              listenWhen: (previous, current) {
+                // return true;
+
+                return current is ArticlePublishedState ||
+                    current is ArticleScheduledState ||
+                    current is ArticleUnpublishedState ||
+                    current is ArticleMarkedForDeletionState ||
                     current is FailureState;
               },
-              listener: (BuildContext context, ArticleManagementState state) {},
-              listenWhen: (previous, current) {
+              buildWhen: (previous, current) {
                 // return false;
                 return current is DraftArticlesFetchedState ||
                     current is PublishedArticlesFetchedState ||

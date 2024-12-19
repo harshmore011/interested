@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../../../../../core/utils/datetime_helper.dart';
 import '../../../entities/article_entity.dart';
@@ -41,7 +42,9 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                   Image(
                     // image: AssetImage("images/app_icon.png"),
                     // image: Image.memory("images/app_icon.png"),
-                    image: article.images.isNotEmpty ? NetworkImage(article.images[0]) : AssetImage("images/app_icon.png"),
+                    image: article.images.isNotEmpty ? NetworkImage(article.images[0])
+                        : AssetImage( kReleaseMode ? "assets/images/app_icon.png"
+                        : "images/app_icon.png"),
                     filterQuality: FilterQuality.low,
                   width: 350,
                   height: 200,

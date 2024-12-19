@@ -27,8 +27,7 @@ class _ArticleWidgetState extends State<ArticleWidget> {
     var article = widget.article;
 
     var homePageState = widget.homePageState;
-    logger.log(
-        "ArticleWidget:build", "homePageState: ${homePageState.runtimeType}");
+    logger.log("ArticleWidget:build", "homePageState: ${homePageState.runtimeType}");
 
     return Column(
       children: [
@@ -63,13 +62,15 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          BlocConsumer<ArticleManagementBloc,
+                          BlocListener<ArticleManagementBloc,
                                   ArticleManagementState>(
-                              builder: (context, state) {
-                            logger.log("ArticleWidget:build: BlocBuilder",
-                                "current state: ${state.runtimeType}");
+                              child:
+                                  // (context, state) {
+                            // logger.log("ArticleWidget:build: BlocBuilder",
+                            //     "current state: ${state.runtimeType}");
 
-                            return PopupMenuButton<String>(
+                            // return
+                              PopupMenuButton<String>(
                               onSelected: (value) {
                                 switch (value) {
                                   case 'ViewArticle':
@@ -141,8 +142,9 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                                 }
                                 return entries;
                               },
-                            );
-                          }, listener: (context, state) {
+                            )
+                          // }
+                         /* , listener: (context, state) {
                             logger.log("ArticleWidget:build: BlocListener",
                                 "current state: ${state.runtimeType}");
                             if (state is ArticlePublishedState) {
@@ -173,8 +175,8 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                                   SnackBarMessage.showSnackBar(
                                       message: "Article deleted",
                                       context: context);
-                                  /* context.read<ArticleManagementBloc>().add(
-                                    DeleteArticleEvent(id: id));*/
+                                  *//* context.read<ArticleManagementBloc>().add(
+                                    DeleteArticleEvent(id: id));*//*
                                   context
                                       .read<ArticleManagementBloc>()
                                       .add(GetDraftArticlesEvent());
@@ -182,16 +184,17 @@ class _ArticleWidgetState extends State<ArticleWidget> {
                                   SnackBarMessage.showSnackBar(
                                       message: state.message, context: context);
                                 }
-                              },
+                              },*/
                               // child: const Icon(Icons.more_vert),
+    ,listener: (BuildContext context, ArticleManagementState state) {},
                               listenWhen: (previous, current) {
-                                return true;
+                                return false;
 
-                              /*  return current is ArticlePublishedState ||
+                                return current is ArticlePublishedState ||
                                     current is ArticleScheduledState ||
                                     current is ArticleUnpublishedState ||
                                     current is ArticleMarkedForDeletionState ||
-                                    current is FailureState;*/
+                                    current is FailureState;
                               }),
                         ],
                       ),

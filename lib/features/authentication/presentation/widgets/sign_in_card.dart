@@ -325,10 +325,12 @@ class _SignInCardState extends State<SignInCard> {
             }, buildWhen: (previous, current) {
               return current is LoadingState || current is FailureState;
             }, listener: (context, state) {
-              logger.log("SignUpCard: LISTENER","current state: ${state.runtimeType}");
+              logger.log("SignInCard: LISTENER","current state: ${state.runtimeType}");
 
               if (state is UserSignedInState) {
+                logger.log("SignInCard: LISTENER"," _personRole: $_personRole");
                 if (_personRole == PersonRole.anonymous) {
+                  logger.log("SignInCard: LISTENER"," (Popping)_personRole: $_personRole");
                   Navigator.of(context).pop();
                 }
                 if(widget.navigateTo == AuthSuccessNavigation.stay) {

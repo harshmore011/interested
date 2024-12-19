@@ -345,6 +345,7 @@ class _SignUpCardState extends State<SignUpCard> {
               if (state is AnonymousSignedInState ||
                   state is AnonymousLinkedToUserState ||
                   state is UserSignedUpState) {
+                logger.log("SignInCard: LISTENER","personRole: $_personRole");
                 if (_personRole == PersonRole.anonymous) {
                   Navigator.of(context).pop();
                 }

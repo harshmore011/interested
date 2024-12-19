@@ -36,7 +36,9 @@ class _AuthenticationPageState extends State<AuthenticationPage>
     logger.log("AuthenticationPage", "initState");
 
     Future.delayed(Duration.zero, () async {
+      logger.log("AuthenticationPage: Future.delayed", "Started");
       if (await _isAlreadyLoggedInAsAnonymous()) {
+        logger.log("AuthenticationPage: Future.delayed await", "Started");
         _personRole = PersonRole.anonymous;
       } else {
         if (_selectedIndex == 0) {
@@ -138,7 +140,7 @@ class _AuthenticationPageState extends State<AuthenticationPage>
                           return SignUpCard(personRole: PersonRole.anonymous,
                               navigateTo: widget.navigateTo);
                         } else if (state is SignInPageState) {
-                          return SignInCard(personRole: PersonRole.user,
+                          return SignInCard(personRole: PersonRole.anonymous,
                               navigateTo: widget.navigateTo);
                         }
                       }
