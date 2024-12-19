@@ -27,7 +27,7 @@ Future<void> main() async {
     options: DefaultFirebaseOptions.currentPlatform,
   );
 
-   await initFirebaseEmulators();
+   // await initFirebaseEmulators();
 
   await injectDependencies();
   logger.log("main:", "");
